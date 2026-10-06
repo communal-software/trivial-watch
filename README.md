@@ -1,5 +1,7 @@
 # trivial-notify
 
+> **Work in progress.** This project is under development; expect missing features and breaking changes.
+
 Watch files and directories for changes, with the best backend the platform
 has: kqueue on macOS, a content scan elsewhere.
 
