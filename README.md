@@ -1,22 +1,16 @@
-# trivial-wait
+# trivial-notify
 
-Wrappers over what a platform gives for waiting. Two halves, each its own
-system:
-
-- `trivial-wait/poll` — wait for file descriptors to become ready.
-- `trivial-wait/notify` — watch files and directories for changes.
+Watch files and directories for changes, with the best backend the platform
+has: kqueue on macOS, a content scan elsewhere.
 
 ```lisp
-(asdf:load-system "trivial-wait")
+(asdf:load-system "trivial-notify")
 
-(trivial-wait.poll:wait (list descriptor) :timeout 5)
-
-(trivial-wait.notify:watch (list #p"src/") (lambda () (print :changed)))
+(trivial-notify:watch (list #p"src/") (lambda () (print :changed)))
 ```
 
 ## Docs
 
-- [Polling descriptors](docs/poll.md)
 - [Watching files](docs/notify.md)
 - [Backends](docs/backends.md)
 - [CI](docs/ci.md)

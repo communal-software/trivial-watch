@@ -1,10 +1,10 @@
 # Watching files
 
-`trivial-wait/notify` calls back when a file or directory changes.
+`trivial-notify` calls back when a file or directory changes.
 
 ```lisp
-(let ((release (trivial-wait.notify:watch (list #p"src/main.lisp")
-                                          (lambda () (print :changed)))))
+(let ((release (trivial-notify:watch (list #p"src/main.lisp")
+                                     (lambda () (print :changed)))))
   ;; ...
   (funcall release))
 ```

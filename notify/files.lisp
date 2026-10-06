@@ -1,6 +1,6 @@
 ;;;; files.lisp — the paths a watch covers, and how it sees them change
 
-(in-package #:trivial-wait.notify)
+(in-package #:trivial-notify)
 
 (defun targets (paths)
   "PATHS and the directories holding them: an editor that saves by writing a

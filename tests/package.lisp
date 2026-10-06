@@ -1,9 +1,7 @@
-(defpackage #:trivial-wait/tests
+(defpackage #:trivial-notify/tests
   (:use #:cl #:fiveam)
-  (:local-nicknames (#:poll #:trivial-wait.poll)
-                    (#:notify #:trivial-wait.notify)))
+  (:local-nicknames (#:notify #:trivial-notify)))
 
-(in-package #:trivial-wait/tests)
+(in-package #:trivial-notify/tests)
 
-(def-suite :trivial-wait/poll)
-(def-suite :trivial-wait/notify)
+(def-suite :trivial-notify)

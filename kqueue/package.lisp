@@ -1,8 +1,7 @@
-(defpackage #:trivial-wait.kqueue
+(defpackage #:trivial-notify.kqueue
   (:use #:cl)
   (:export #:supported-p
-           #:+filter-read+ #:+filter-write+ #:+filter-vnode+ #:+filter-user+
-           #:+flag-add+ #:+flag-enable+ #:+flag-clear+ #:+flag-oneshot+
-           #:+flag-eof+ #:+flag-error+
+           #:+filter-vnode+ #:+filter-user+
+           #:+flag-add+ #:+flag-enable+ #:+flag-clear+
            #:+note-trigger+ #:+note-vnode+
            #:open-queue #:close-queue #:set-event #:change #:wake #:wait))

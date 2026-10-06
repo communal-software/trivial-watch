@@ -1,6 +1,6 @@
-(in-package #:trivial-wait/tests)
+(in-package #:trivial-notify/tests)
 
-(in-suite :trivial-wait/notify)
+(in-suite :trivial-notify)
 
 (defvar *directory* nil)
 
@@ -8,7 +8,7 @@
   "Run BODY with *DIRECTORY* a directory of its own, removed afterwards."
   `(let ((*directory* (ensure-directories-exist
                        (merge-pathnames
-                        (format nil "trivial-wait-~36r/" (random (expt 2 48)))
+                        (format nil "trivial-notify-~36r/" (random (expt 2 48)))
                         (uiop:temporary-directory)))))
      (unwind-protect (progn ,@body)
        (uiop:delete-directory-tree *directory* :validate t))))
@@ -85,6 +85,6 @@
       (is (zerop count)))))
 
 (test the-targets-of-a-path-include-its-directory
-  (let ((targets (notify::targets (list #p"/tmp/trivial-wait/a.lisp"))))
-    (is (member "/tmp/trivial-wait/a.lisp" targets :test #'string=))
-    (is (member "/tmp/trivial-wait/" targets :test #'string=))))
+  (let ((targets (notify::targets (list #p"/tmp/trivial-notify/a.lisp"))))
+    (is (member "/tmp/trivial-notify/a.lisp" targets :test #'string=))
+    (is (member "/tmp/trivial-notify/" targets :test #'string=))))

@@ -1,9 +1,9 @@
-;;;; kqueue.lisp — the kqueue calls both halves of trivial-wait share
+;;;; kqueue.lisp — the kqueue calls trivial-notify makes
 ;;;;
 ;;;; Darwin only. Every BSD lays struct kevent out differently, so each
 ;;;; needs its own binding, tested on the platform.
 
-(in-package #:trivial-wait.kqueue)
+(in-package #:trivial-notify.kqueue)
 
 (defun supported-p ()
   #+darwin t
@@ -11,17 +11,12 @@
 
 #+darwin
 (progn
-  (defconstant +filter-read+ -1)
-  (defconstant +filter-write+ -2)
   (defconstant +filter-vnode+ -4)
   (defconstant +filter-user+ -10)
 
   (defconstant +flag-add+ #x0001)
   (defconstant +flag-enable+ #x0004)
-  (defconstant +flag-oneshot+ #x0010)
   (defconstant +flag-clear+ #x0020)
-  (defconstant +flag-error+ #x4000)
-  (defconstant +flag-eof+ #x8000)
 
   (defconstant +note-trigger+ #x01000000)
   (defconstant +note-vnode+ #x0000006f

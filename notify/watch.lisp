@@ -1,6 +1,6 @@
 ;;;; watch.lisp — the notify half's only entry points
 
-(in-package #:trivial-wait.notify)
+(in-package #:trivial-notify)
 
 (defun backend ()
   "The backend WATCH uses here: :kqueue, or :scan where the platform has no

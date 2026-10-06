@@ -1,6 +1,6 @@
 ;;;; kqueue.lisp — filesystem events through kqueue
 
-(in-package #:trivial-wait.notify)
+(in-package #:trivial-notify)
 
 #+darwin
 (progn
@@ -32,7 +32,7 @@
                        kq:+note-vnode+))
           (let ((thread (bt2:make-thread
                          (lambda () (%kqueue-loop queue callback running))
-                         :name "trivial-wait notify")))
+                         :name "trivial-notify")))
             (lambda ()
               (setf (car running) nil)
               (kq:wake queue)
