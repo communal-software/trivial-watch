@@ -11,7 +11,12 @@ on:
       lisp:
         description: Run only this Lisp
         type: choice
-        options: [all, sbcl, ecl]
+        options: [all, sbcl, ecl, ccl, clisp]
+        default: all
+      os:
+        description: Run only this OS family
+        type: choice
+        options: [all, linux, macos, windows]
         default: all
 
 concurrency:
@@ -19,25 +24,57 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  matrix:
+    runs-on: ubuntu-24.04
+    outputs:
+      entries: ${{ steps.matrix.outputs.entries }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: matrix
+        env:
+          SELECT_LISP: ${{ inputs.lisp || 'all' }}
+          SELECT_OS: ${{ inputs.os || 'all' }}
+        run: |
+          python3 - <<'PYTHON'
+          import json, os
+          entries = json.load(open('.github/ci-matrix.json'))
+          entries = [e for e in entries
+                     if os.environ['SELECT_LISP'] in ('all', e['implementation'])
+                     and os.environ['SELECT_OS'] in ('all', e['family'])]
+          if not entries:
+              raise SystemExit('No configured jobs match these filters')
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+              out.write('entries=' + json.dumps(entries) + '\n')
+          PYTHON
+
   test:
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
+    needs: matrix
+    name: ${{ matrix.implementation }} / ${{ matrix.family }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        lisp: ${{ fromJSON(inputs.lisp == 'sbcl' && '["sbcl"]' || inputs.lisp == 'ecl' && '["ecl"]' || '["sbcl", "ecl"]') }}
+        include: ${{ fromJSON(needs.matrix.outputs.entries) }}
+    env:
+      LISP: ${{ matrix.lisp }}
+      NOTIFY_EXPECT_BACKEND: ${{ matrix.backend }}
     steps:
       - uses: actions/checkout@v5
-
-      - name: Install Lisp
-        run: sudo apt-get update && sudo apt-get install -y sbcl ${{ matrix.lisp }}
-
-      - name: Install Quicklisp
+      - uses: 40ants/setup-lisp@v4
+        if: matrix.implementation != 'clisp'
+        with:
+          asdf-system: trivial-notify/tests
+          cache: false
+      - name: Run test suite
+        if: matrix.implementation != 'clisp'
+        shell: lispsh -eo pipefail {0}
+        run: ros -Q run --load tests/run.lisp
+      - name: Verify CLISP
+        if: matrix.implementation == 'clisp'
         run: |
-          curl -sSfLO https://beta.quicklisp.org/quicklisp.lisp
-          sbcl --non-interactive --no-userinit --load quicklisp.lisp \
-               --eval '(quicklisp-quickstart:install)'
-          cp -R "$GITHUB_WORKSPACE" ~/quicklisp/local-projects/trivial-notify
-
-      - name: Test
-        run: tests/test.sh ${{ matrix.lisp }}
+          sudo apt-get update
+          sudo apt-get install -y clisp
+          curl -sSfLo "$RUNNER_TEMP/quicklisp.lisp" https://beta.quicklisp.org/quicklisp.lisp
+          clisp -q -norc -x "(progn (load \"$RUNNER_TEMP/quicklisp.lisp\") (funcall (read-from-string \"quicklisp-quickstart:install\")))"
+          tests/test.sh clisp

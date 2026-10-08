@@ -79,7 +79,7 @@
       timespec))
 
   (defun wait (queue count timeout)
-    "Up to COUNT events, as (ident filter flags) triples. Waits TIMEOUT
+    "Up to COUNT events, as (ident filter flags fflags) lists. Waits TIMEOUT
 seconds, or forever if it is nil."
     (cffi:with-foreign-objects ((events '(:struct kevent) count)
                                 (timespec '(:struct timespec)))
@@ -94,4 +94,6 @@ seconds, or forever if it is nil."
                             (cffi:foreign-slot-value event '(:struct kevent)
                                                      'filter)
                             (cffi:foreign-slot-value event '(:struct kevent)
-                                                     'flags)))))))
+                                                     'flags)
+                            (cffi:foreign-slot-value event '(:struct kevent)
+                                                     'fflags)))))))

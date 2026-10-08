@@ -1,20 +1,26 @@
 # CI
 
-CI runs SBCL and ECL on Linux for every code change.
+GitHub Actions verifies native watching and scanning on Linux, macOS, and Windows.
+The configured implementation/OS pairs live in
+[`.github/ci-matrix.json`](../.github/ci-matrix.json).
 
-| Trigger | Jobs |
+| Trigger | Coverage |
 |---|---|
-| Push to `trunk` or pull request | SBCL and ECL |
+| Code push to `trunk` or pull request | Full configured matrix |
 | Docs-only change | None |
-| Manual dispatch | SBCL, ECL, or both |
+| Manual dispatch | Filter by Lisp and OS family |
 
-New pushes cancel the previous run for the same branch or pull request.
+Jobs assert the native backend and print implementation, OS, architecture, and
+dependency versions. Failures are required checks; newer pushes cancel older
+runs for the same branch or pull request.
 
 ```sh
-gh workflow run ci.yml -f lisp=ecl
+gh workflow run ci.yml -f lisp=ecl -f os=macos
 ```
 
-[`.build.yml`](../.build.yml) also runs SBCL on Linux on every push to the sr.ht
-mirror.
+SBCL and ECL macOS jobs use ARM64 runners. Distributed CCL macOS builds use an
+Intel runner. CLISP verification uses the distro package rather than Roswell.
+See [Support](support.md) for verified results and coverage gaps.
 
-Run `tests/test.sh sbcl` locally before pushing; the same script runs in CI.
+[`.build.yml`](../.build.yml) also tests SBCL/Linux on sourcehut pushes.
+Run `tests/test.sh sbcl` locally before pushing.

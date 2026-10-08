@@ -1,27 +1,74 @@
 # Watching files
 
-`trivial-notify` calls back when a file or directory changes.
+`watch` reports changes to requested files and directories on a worker thread.
+It returns a release function, or nil when setup fails.
 
 ```lisp
 (let ((release (trivial-notify:watch (list #p"src/main.lisp")
-                                     (lambda () (print :changed)))))
-  ;; ...
-  (funcall release))
+                                    (lambda () (print :changed)))))
+  (when release
+    ;; Keep RELEASE until the watch is no longer needed.
+    (funcall release)))
 ```
 
-| Call | Value |
+## Options
+
+| Option | Default | Behavior |
+|---|---|---|
+| `:events` | nil | Pass a list of events to the callback when true. |
+| `:recursive` | nil | Include descendants of requested directories when true. |
+| `:interval` | 1.0 | Positive scan interval in seconds; native backends ignore it. |
+
+A directory covers its immediate files and directory entries. Recursive watches
+include existing and newly created subtrees, excluding directory symlinks.
+Requested paths must exist when setup starts. Watches retain parent registrations
+to detect deletion, recreation, and editor saves that replace files. Unrelated
+siblings do not trigger callbacks.
+
+## Event batches
+
+```lisp
+(trivial-notify:watch
+ (list #p"src/")
+ (lambda (batch)
+   (dolist (event batch)
+     (format t "~a ~a~%" (trivial-notify:event-kind event)
+                         (trivial-notify:event-path event))))
+ :events t :recursive t)
+```
+
+| Accessor | Value |
 |---|---|
-| `(watch paths callback &key interval)` | A function that ends the watch, or nil if it cannot be opened. |
-| `(backend)` | The [backend](backends.md) in use: `:kqueue` or `:scan`. |
-| `(native-p)` | Whether the backend waits on events rather than scanning. |
+| `event-path` | Absolute pathname, rooted at the requested path's truename. |
+| `event-kind` | `:created`, `:modified`, or `:deleted`. |
+| `event-p` | Whether a value is an event. |
 
-`callback` runs on a thread of its own, once per batch of events. A save
-usually arrives as several changes, so expect more calls than saves and
-debounce if that matters.
+Batches contain one event per changed path, sorted by namestring. Renames appear
+as deletion and creation. Native notifications trigger content snapshots; scanning
+compares snapshots on its timer. File contents determine modifications.[^snapshots]
+Callbacks are sequential within each watch; several writes may form one batch.
 
-A path can be a file or a directory. Each watched path covers the directory
-holding it as well: an editor that saves by writing a new file and renaming
-it over the old one only touches the directory.
+## Releasing a watch
 
-`interval` is how often the scan backend looks, in seconds. Native backends
-ignore it.
+Release is idempotent and wakes idle workers. An external caller waits until the
+callback and resource cleanup finish. A callback may release its own watch;
+cleanup follows when it returns.
+
+Setup failure releases partial registrations and returns nil. Native setup failure
+does not switch to scanning. A worker or callback error stops the watch, emits a
+warning, and is re-signaled by a later external release.
+
+## Limitations
+
+- A change that appears and disappears between snapshots can be missed; this
+  includes a rename away and back. This is not a filesystem audit log.
+- Metadata-only changes and replacement with identical contents are not reported.
+- Snapshot reads can observe a file during a write, producing intermediate batches.
+- Native registrations use OS resources proportional to the covered paths;
+  snapshots read covered files after notifications.
+- Implementation verification gaps are listed in [Support](support.md#limitations).
+
+[^snapshots]: Snapshots hash files in 64 KiB chunks using FNV-1a and include file
+    length. Hash collisions are possible. Scanning hashes every covered file each
+    interval; native watches do so after notification, including unrelated parent
+    events before filtering.

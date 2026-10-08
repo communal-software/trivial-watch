@@ -8,7 +8,10 @@
   :serial t
   :components ((:file "package")
                (:file "files")
+               (:file "worker")
                (:file "kqueue")
+               (:file "inotify")
+               (:file "windows")
                (:file "scan")
                (:file "watch"))
   :in-order-to ((test-op (test-op "trivial-notify/tests"))))

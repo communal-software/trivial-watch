@@ -1,0 +1,58 @@
+[
+  {
+    "implementation": "sbcl",
+    "lisp": "sbcl-bin",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "inotify"
+  },
+  {
+    "implementation": "ecl",
+    "lisp": "ecl",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "inotify"
+  },
+  {
+    "implementation": "ccl",
+    "lisp": "ccl-bin",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "inotify"
+  },
+  {
+    "implementation": "clisp",
+    "lisp": "clisp",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "inotify"
+  },
+  {
+    "implementation": "sbcl",
+    "lisp": "sbcl-bin",
+    "family": "macos",
+    "runner": "macos-15",
+    "backend": "kqueue"
+  },
+  {
+    "implementation": "ecl",
+    "lisp": "ecl",
+    "family": "macos",
+    "runner": "macos-15",
+    "backend": "kqueue"
+  },
+  {
+    "implementation": "ccl",
+    "lisp": "ccl-bin",
+    "family": "macos",
+    "runner": "macos-15-intel",
+    "backend": "kqueue"
+  },
+  {
+    "implementation": "sbcl",
+    "lisp": "sbcl-bin",
+    "family": "windows",
+    "runner": "windows-2022",
+    "backend": "read-directory-changes"
+  }
+]

@@ -1,0 +1,25 @@
+(require :asdf)
+
+(handler-case
+    (progn
+      (unless (find-package :ql)
+        (load (or (uiop:getenv "QUICKLISP_SETUP")
+                  (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname)))))
+      (pushnew (truename (merge-pathnames "../" (uiop:pathname-directory-pathname *load-truename*)))
+               asdf:*central-registry* :test #'equal)
+      (funcall (read-from-string "ql:quickload") :trivial-notify/tests :silent t)
+      (format t "~&Implementation: ~a ~a~%OS: ~a ~a~%Architecture: ~a~%"
+              (lisp-implementation-type) (lisp-implementation-version)
+              (software-type) (software-version) (machine-type))
+      (dolist (name '("asdf" "cffi" "bordeaux-threads" "uiop" "fiveam"))
+        (format t "~a: ~a~%" name (asdf:component-version (asdf:find-system name))))
+      (let* ((backend (uiop:symbol-call :trivial-notify :backend))
+             (expected (uiop:getenv "NOTIFY_EXPECT_BACKEND")))
+        (format t "Backend: ~s~%" backend)
+        (when (and expected (not (string-equal expected (symbol-name backend))))
+          (error "Expected backend ~a, got ~s" expected backend)))
+      (asdf:test-system :trivial-notify)
+      (uiop:quit 0))
+  (error (condition)
+    (format *error-output* "~&~a~%" condition)
+    (uiop:quit 1)))

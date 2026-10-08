@@ -1,41 +1,103 @@
-;;;; files.lisp — the paths a watch covers, and how it sees them change
-
 (in-package #:trivial-notify)
 
+(defstruct (event (:constructor %make-event (path kind)))
+  (path nil :read-only t)
+  (kind nil :read-only t))
+
+(defun path= (a b)
+  #+(or windows win32 mswindows) (string-equal a b)
+  #-(or windows win32 mswindows) (string= a b))
+
+(defun normalize-paths (paths)
+  (remove-duplicates
+   (mapcar (lambda (path)
+             (or (probe-file path)
+                 (error "Watch path does not exist: ~a" path)))
+           paths)
+   :test #'equal))
+
 (defun targets (paths)
-  "PATHS and the directories holding them: an editor that saves by writing a
-new file and renaming it over the old one only touches the directory."
   (remove-duplicates
    (loop for path in paths
          collect (namestring path)
-         collect (namestring (make-pathname :name nil :type nil
-                                            :defaults path)))
-   :test #'string=))
+         collect (namestring (if (uiop:directory-pathname-p path)
+                                   (uiop:pathname-parent-directory-pathname path)
+                                   (uiop:pathname-directory-pathname path))))
+   :test #'path=))
 
 (defun stamp (file)
-  "A key for FILE's contents, or nil if it cannot be read. FILE-WRITE-DATE
-has one-second resolution, too coarse for an edit made while a scan runs, so
-this reads the file."
   (ignore-errors
-   (with-open-file (stream file :element-type '(unsigned-byte 8))
-     (let* ((buffer (make-array (file-length stream)
-                                :element-type '(unsigned-byte 8)))
-            (count (read-sequence buffer stream))
+    (with-open-file (stream file :element-type '(unsigned-byte 8))
+      (let ((buffer (make-array 65536 :element-type '(unsigned-byte 8)))
+            (size 0)
             (hash 14695981039346656037))
-       (declare (type (unsigned-byte 64) hash))
-       ;; FNV-1a: SXHASH says nothing useful about a byte vector.
-       (dotimes (index count)
-         (setf hash (ldb (byte 64 0)
-                         (* (logxor hash (aref buffer index))
-                            1099511628211))))
-       (cons count hash)))))
+        (declare (type (unsigned-byte 64) hash))
+        (loop for count = (read-sequence buffer stream)
+              while (plusp count)
+              do (incf size count)
+                 ;; FNV-1a: SXHASH does not hash byte-vector contents portably.
+                 (dotimes (index count)
+                   (setf hash (ldb (byte 64 0)
+                                   (* (logxor hash (aref buffer index))
+                                      1099511628211)))))
+        (cons size hash)))))
 
-(defun snapshot (paths)
-  "Each watched file and a key for its contents. A directory contributes the
-files in it, so one added or removed there shows as a change."
-  (sort (loop for path in paths
-              append (if (uiop:directory-exists-p path)
-                         (loop for file in (uiop:directory-files path)
-                               collect (cons (namestring file) (stamp file)))
-                         (list (cons (namestring path) (stamp path)))))
-        #'string< :key #'car))
+(defun real-directory-p (path)
+  (let ((actual (ignore-errors (truename path))))
+    (and actual (path= (namestring path) (namestring actual)))))
+
+(defun snapshot (paths &optional recursive)
+  (let ((entries (make-hash-table :test #'equal)))
+    (labels ((record (path value)
+               (setf (gethash (namestring path) entries) value))
+             (visit (path)
+               (cond
+                 ((uiop:directory-exists-p path)
+                  (record path :directory)
+                  (dolist (file (uiop:directory-files path))
+                    (record file (stamp file)))
+                  (dolist (directory
+                           #+ecl (directory (merge-pathnames uiop:*wild-directory* path)
+                                            :resolve-symlinks nil)
+                           #-ecl (uiop:subdirectories path))
+                    (when (real-directory-p directory)
+                      (if recursive
+                          (visit directory)
+                          (record directory :directory)))))
+                 ((probe-file path) (record path (stamp path))))))
+      (dolist (path paths) (visit path)))
+    (sort (loop for path being the hash-keys of entries using (hash-value value)
+                collect (cons path value))
+          #'string< :key #'car)))
+
+(defun snapshot-events (before after)
+  (let ((old (make-hash-table :test #'equal))
+        (new (make-hash-table :test #'equal))
+        (events nil))
+    (dolist (entry before) (setf (gethash (car entry) old) (cdr entry)))
+    (dolist (entry after) (setf (gethash (car entry) new) (cdr entry)))
+    (maphash (lambda (path value)
+               (multiple-value-bind (previous present) (gethash path old)
+                 (cond ((not present)
+                        (push (%make-event (pathname path) :created) events))
+                       ((not (equal previous value))
+                        (push (%make-event (pathname path) :modified) events)))))
+             new)
+    (maphash (lambda (path value)
+               (declare (ignore value))
+               (unless (nth-value 1 (gethash path new))
+                 (push (%make-event (pathname path) :deleted) events)))
+             old)
+    (sort events #'string< :key (lambda (event) (namestring (event-path event))))))
+
+(defun registration-paths (paths state &optional directories-only)
+  (remove-duplicates
+   (append (loop for target in (targets paths)
+                 when (probe-file target)
+                   when (or (not directories-only)
+                            (uiop:directory-exists-p target))
+                     collect target)
+           (loop for (path . value) in state
+                 when (or (not directories-only) (eq value :directory))
+                   collect path))
+   :test #'path=))

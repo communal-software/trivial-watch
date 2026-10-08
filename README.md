@@ -3,7 +3,8 @@
 > **Work in progress.** This project is under development; expect missing features and breaking changes.
 
 Watch files and directories for changes, with the best backend the platform
-has: kqueue on macOS, a content scan elsewhere.
+has: kqueue on macOS, inotify on Linux, ReadDirectoryChangesW on Windows,
+and a content scan elsewhere.
 
 ```lisp
 (asdf:load-system "trivial-notify")
@@ -11,11 +12,25 @@ has: kqueue on macOS, a content scan elsewhere.
 (trivial-notify:watch (list #p"src/") (lambda () (print :changed)))
 ```
 
+## Support
+
+| Implementation | Linux | macOS | Windows |
+|---|---|---|---|
+| SBCL | CI pending | Verified, ARM64 | CI pending |
+| ECL | CI pending | Verified, ARM64 | Untested |
+| CCL | CI pending | ARM64 verification fails; Intel pending | Untested |
+| CLISP | Verification pending | Untested | Untested |
+| LispWorks, Allegro | Untested | Untested | Untested |
+
+Untested implementations are free to attempt loading. See [support details](docs/support.md)
+for verification evidence and [coverage gaps](docs/support.md#limitations).
+
 ## Docs
 
 - [Watching files](docs/notify.md)
 - [Backends](docs/backends.md)
 - [CI](docs/ci.md)
+- [Support and testing](docs/support.md)
 
 ## License
 
