@@ -16,9 +16,9 @@ and a content scan elsewhere.
 
 | Implementation | Linux | macOS | Windows |
 |---|---|---|---|
-| SBCL | CI pending | Verified, ARM64 | CI pending |
-| ECL | CI pending | Verified, ARM64 | Untested |
-| CCL | CI pending | ARM64 verification fails; Intel pending | Untested |
+| SBCL | CI | CI, ARM64 | CI |
+| ECL | CI | CI, ARM64 | Untested |
+| CCL | CI | CI, Intel | Untested |
 | CLISP | Distro build fails dependency check | Untested | Untested |
 | LispWorks, Allegro | Untested | Untested | Untested |
 

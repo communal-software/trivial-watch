@@ -6,7 +6,7 @@ The configured implementation/OS pairs live in
 
 | Trigger | Coverage |
 |---|---|
-| Code push to `trunk` or pull request | Full configured matrix |
+| Code push to `trunk` or pull request | Full verified matrix |
 | Docs-only change | None |
 | Manual dispatch | Filter by Lisp and OS family; explicitly select CLISP for its verification job |
 

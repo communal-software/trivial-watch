@@ -11,16 +11,19 @@ CI coverage describes actual automated tests, not assumed compatibility.
 
 | Implementation | Linux | macOS | Windows |
 |---|---|---|---|
-| SBCL | Pending CI | Verified locally, ARM64 | Pending CI |
-| ECL | Pending CI | Verified locally, ARM64 | Untested |
-| CCL | Pending CI | Verification failure, local ARM64 build; Intel pending | Untested |
+| SBCL | Verified, CI (x86_64) | Verified, CI (ARM64) | Verified, CI (x86_64) |
+| ECL | Verified, CI (x86_64) | Verified, CI (ARM64) | Untested |
+| CCL | Verified, CI (x86_64) | Verified, CI (Intel)[^ccl-arm] | Untested |
 | CLISP | Dependency failure, distro build | Untested | Untested |
 | LispWorks | Untested | Untested | Untested |
 | Allegro | Untested | Untested | Untested |
 
-Local checks use SBCL 2.6.8, ECL 26.5.5, and CCL 1.13
-(v1.13-459-g690ff7ea), on ARM64 macOS 15.7.5. SBCL and ECL pass 98 checks.
+The [verification workflow](https://github.com/takeiteasy/trivial-notify/actions/runs/37839692440)
+checks both native watching and scanning. Linux runs 102 checks, macOS 98,
+and Windows 94; platform-specific cases account for the difference.
 The runner prints versions, dependencies, architecture, and selected backend.
+
+Local ARM64 macOS 15.7.5 checks also pass on SBCL 2.6.8 and ECL 26.5.5.
 
 ## Running tests
 
@@ -47,3 +50,7 @@ asserts the selected backend, for example `inotify`.
 | BSDs | No GitHub-hosted runner; native bindings remain in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-notify/3). |
 | ABCL | Dedicated WatchService backend remains in [ticket 8](https://todo.sr.ht/~takeiteasy/trivial-notify/8). |
 | JSCL | No filesystem or threading backend for this library. |
+
+[^ccl-arm]: The local ARM64 CCL 1.13 build (v1.13-459-g690ff7ea) fails concurrent
+    replacement tests. Distributed CCL 1.13 passes on Linux and Intel macOS.
+    See [Limitations](#limitations) for the affected-build ticket.
