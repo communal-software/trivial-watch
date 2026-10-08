@@ -14,12 +14,12 @@ CI coverage describes actual automated tests, not assumed compatibility.
 | SBCL | Pending CI | Verified locally, ARM64 | Pending CI |
 | ECL | Pending CI | Verified locally, ARM64 | Untested |
 | CCL | Pending CI | Verification failure, local ARM64 build; Intel pending | Untested |
-| CLISP | Pending verification | Untested | Untested |
+| CLISP | Dependency failure, distro build | Untested | Untested |
 | LispWorks | Untested | Untested | Untested |
 | Allegro | Untested | Untested | Untested |
 
 Local checks use SBCL 2.6.8, ECL 26.5.5, and CCL 1.13
-(v1.13-459-g690ff7ea), on ARM64 macOS 15.7.5. SBCL and ECL pass 80 checks.
+(v1.13-459-g690ff7ea), on ARM64 macOS 15.7.5. SBCL and ECL pass 98 checks.
 The runner prints versions, dependencies, architecture, and selected backend.
 
 ## Running tests
@@ -41,6 +41,7 @@ asserts the selected backend, for example `inotify`.
 | Combination | Coverage gap |
 |---|---|
 | LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending in [ticket 6](https://todo.sr.ht/~takeiteasy/trivial-notify/6). |
+| Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads: [verification ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/10). |
 | Local ARM64 CCL | Concurrent input opens can interfere with replacement and leave files behind: [compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/9). |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | No GitHub-hosted runner; native bindings remain in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-notify/3). |

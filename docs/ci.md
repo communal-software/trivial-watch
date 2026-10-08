@@ -8,7 +8,7 @@ The configured implementation/OS pairs live in
 |---|---|
 | Code push to `trunk` or pull request | Full configured matrix |
 | Docs-only change | None |
-| Manual dispatch | Filter by Lisp and OS family |
+| Manual dispatch | Filter by Lisp and OS family; explicitly select CLISP for its verification job |
 
 Jobs assert the native backend and print implementation, OS, architecture, and
 dependency versions. Failures are required checks; newer pushes cancel older
@@ -19,7 +19,8 @@ gh workflow run ci.yml -f lisp=ecl -f os=macos
 ```
 
 SBCL and ECL macOS jobs use ARM64 runners. Distributed CCL macOS builds use an
-Intel runner. CLISP verification uses the distro package rather than Roswell.
+Intel runner. CLISP verification uses the distro package rather than Roswell and runs only
+when explicitly selected; that build fails the threading dependency check.
 See [Support](support.md) for verified results and coverage gaps.
 
 [`.build.yml`](../.build.yml) also tests SBCL/Linux on sourcehut pushes.

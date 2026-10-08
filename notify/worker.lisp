@@ -20,6 +20,7 @@
                    (setf running nil closed t)
                    (bt2:condition-broadcast finished))))
              (settle (paths recursive)
+               ;; TODO: O(total covered bytes) per wake; narrow native reads using event hints (#11).
                (loop for before = (snapshot paths recursive)
                      for after = (progn (funcall (source-refresh source) before)
                                         (snapshot paths recursive))

@@ -65,7 +65,8 @@ warning, and is re-signaled by a later external release.
 - Metadata-only changes and replacement with identical contents are not reported.
 - Snapshot reads can observe a file during a write, producing intermediate batches.
 - Native registrations use OS resources proportional to the covered paths;
-  snapshots read covered files after notifications.
+  snapshots read covered files after notifications. Narrowing those reads is
+  tracked in [the performance ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/11).
 - Implementation verification gaps are listed in [Support](support.md#limitations).
 
 [^snapshots]: Snapshots hash files in 64 KiB chunks using FNV-1a and include file

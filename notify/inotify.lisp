@@ -57,10 +57,12 @@
                      (unless (gethash path watches)
                        ;; Changes only: reading snapshots must not trigger notifications.
                        (let ((watch (%inotify-add descriptor path #x01000fce)))
-                         (when (minusp watch)
-                           (error "Cannot register inotify target: ~a" path))
-                         (setf (gethash path watches) watch
-                               (gethash watch identities) path))))))
+                         (cond
+                           ((not (minusp watch))
+                            (setf (gethash path watches) watch
+                                  (gethash watch identities) path))
+                           ((uiop:probe-file* path)
+                            (error "Cannot register inotify target: ~a" path))))))))
                (read-events ()
                  (let ((changed nil))
                    (cffi:with-foreign-object (buffer :uint8 65536)

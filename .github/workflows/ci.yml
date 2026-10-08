@@ -40,7 +40,9 @@ jobs:
           entries = json.load(open('.github/ci-matrix.json'))
           entries = [e for e in entries
                      if os.environ['SELECT_LISP'] in ('all', e['implementation'])
-                     and os.environ['SELECT_OS'] in ('all', e['family'])]
+                     and os.environ['SELECT_OS'] in ('all', e['family'])
+                     and (not e.get('verification_only', False)
+                          or os.environ['SELECT_LISP'] == e['implementation'])]
           if not entries:
               raise SystemExit('No configured jobs match these filters')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:

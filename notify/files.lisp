@@ -27,7 +27,7 @@
 (defun normalize-paths (paths)
   (unique-paths
    (mapcar (lambda (path)
-             (or (probe-file path)
+             (or (uiop:probe-file* path :truename t)
                  (error "Watch path does not exist: ~a" path)))
            paths)
    #'namestring))
@@ -71,20 +71,22 @@
                   (record path :directory)
                   (dolist (file
                            #+ecl (remove-if #'uiop:directory-pathname-p
-                                            (directory (merge-pathnames uiop:*wild-file-for-directory* path)
-                                                       :resolve-symlinks nil))
+                                            (ignore-errors
+                                              (directory (merge-pathnames uiop:*wild-file-for-directory* path)
+                                                         :resolve-symlinks nil)))
                            #-ecl (uiop:directory-files path))
                     (record file (stamp file)))
                   ;; ECL's UIOP enumeration resolves directory symlinks.
                   (dolist (directory
-                           #+ecl (directory (merge-pathnames uiop:*wild-directory* path)
-                                            :resolve-symlinks nil)
+                           #+ecl (ignore-errors
+                                   (directory (merge-pathnames uiop:*wild-directory* path)
+                                              :resolve-symlinks nil))
                            #-ecl (uiop:subdirectories path))
                     (when (real-directory-p directory)
                       (if recursive
                           (visit directory)
                           (record directory :directory)))))
-                 ((probe-file path) (record path (stamp path))))))
+                 ((uiop:probe-file* path) (record path (stamp path))))))
       (dolist (path paths) (visit path)))
     (sort (loop for path being the hash-keys of entries using (hash-value value)
                 collect (cons path value))
@@ -113,7 +115,7 @@
 (defun registration-paths (paths state &optional directories-only)
   (unique-paths
    (append (loop for target in (targets paths)
-                 when (probe-file target)
+                 when (uiop:probe-file* target)
                    when (or (not directories-only)
                             (uiop:directory-exists-p target))
                      collect target)

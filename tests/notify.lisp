@@ -337,3 +337,16 @@
       (is-true reset)
       (is (= 42 ignored))
       (signals error (notify::decode-inotify-events buffer 1 #'identity (lambda ()))))))
+
+(test a-requested-directory-can-be-deleted-and-recreated
+  (with-directory
+    (let ((root (ensure-directories-exist (merge-pathnames "watched/" *directory*))))
+      (with-event-watch ((list root) :recursive t)
+        (uiop:delete-empty-directory root)
+        (is-true (await root :deleted))
+        (ensure-directories-exist root)
+        (is-true (await root :created))
+        (let ((path (write-file "watched/new.txt" (symbol-name mode))))
+          (is-true (await path :created))
+          (delete-file path)
+          (is-true (await path :deleted)))))))

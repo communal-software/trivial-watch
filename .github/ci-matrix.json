@@ -25,7 +25,8 @@
     "lisp": "clisp",
     "family": "linux",
     "runner": "ubuntu-24.04",
-    "backend": "inotify"
+    "backend": "inotify",
+    "verification_only": true
   },
   {
     "implementation": "sbcl",

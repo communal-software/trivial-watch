@@ -19,7 +19,7 @@ and a content scan elsewhere.
 | SBCL | CI pending | Verified, ARM64 | CI pending |
 | ECL | CI pending | Verified, ARM64 | Untested |
 | CCL | CI pending | ARM64 verification fails; Intel pending | Untested |
-| CLISP | Verification pending | Untested | Untested |
+| CLISP | Distro build fails dependency check | Untested | Untested |
 | LispWorks, Allegro | Untested | Untested | Untested |
 
 Untested implementations are free to attempt loading. See [support details](docs/support.md)
