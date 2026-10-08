@@ -8,22 +8,37 @@
   #+(or windows win32 mswindows) (string-equal a b)
   #-(or windows win32 mswindows) (string= a b))
 
+(defun make-path-table ()
+  (make-hash-table :test #+(or windows win32 mswindows) #'equalp
+                       #-(or windows win32 mswindows) #'equal))
+
+(defun path-set (paths)
+  (let ((set (make-path-table)))
+    (dolist (path paths) (setf (gethash path set) t))
+    set))
+
+(defun unique-paths (paths &optional (key #'identity))
+  (let ((seen (make-path-table)))
+    (loop for path in paths
+          for name = (funcall key path)
+          unless (gethash name seen)
+            collect path and do (setf (gethash name seen) t))))
+
 (defun normalize-paths (paths)
-  (remove-duplicates
+  (unique-paths
    (mapcar (lambda (path)
              (or (probe-file path)
                  (error "Watch path does not exist: ~a" path)))
            paths)
-   :test #'equal))
+   #'namestring))
 
 (defun targets (paths)
-  (remove-duplicates
+  (unique-paths
    (loop for path in paths
          collect (namestring path)
          collect (namestring (if (uiop:directory-pathname-p path)
                                    (uiop:pathname-parent-directory-pathname path)
-                                   (uiop:pathname-directory-pathname path))))
-   :test #'path=))
+                                   (uiop:pathname-directory-pathname path))))))
 
 (defun stamp (file)
   (ignore-errors
@@ -47,15 +62,20 @@
     (and actual (path= (namestring path) (namestring actual)))))
 
 (defun snapshot (paths &optional recursive)
-  (let ((entries (make-hash-table :test #'equal)))
+  (let ((entries (make-path-table)))
     (labels ((record (path value)
                (setf (gethash (namestring path) entries) value))
              (visit (path)
                (cond
                  ((uiop:directory-exists-p path)
                   (record path :directory)
-                  (dolist (file (uiop:directory-files path))
+                  (dolist (file
+                           #+ecl (remove-if #'uiop:directory-pathname-p
+                                            (directory (merge-pathnames uiop:*wild-file-for-directory* path)
+                                                       :resolve-symlinks nil))
+                           #-ecl (uiop:directory-files path))
                     (record file (stamp file)))
+                  ;; ECL's UIOP enumeration resolves directory symlinks.
                   (dolist (directory
                            #+ecl (directory (merge-pathnames uiop:*wild-directory* path)
                                             :resolve-symlinks nil)
@@ -71,8 +91,8 @@
           #'string< :key #'car)))
 
 (defun snapshot-events (before after)
-  (let ((old (make-hash-table :test #'equal))
-        (new (make-hash-table :test #'equal))
+  (let ((old (make-path-table))
+        (new (make-path-table))
         (events nil))
     (dolist (entry before) (setf (gethash (car entry) old) (cdr entry)))
     (dolist (entry after) (setf (gethash (car entry) new) (cdr entry)))
@@ -91,7 +111,7 @@
     (sort events #'string< :key (lambda (event) (namestring (event-path event))))))
 
 (defun registration-paths (paths state &optional directories-only)
-  (remove-duplicates
+  (unique-paths
    (append (loop for target in (targets paths)
                  when (probe-file target)
                    when (or (not directories-only)
@@ -99,5 +119,4 @@
                      collect target)
            (loop for (path . value) in state
                  when (or (not directories-only) (eq value :directory))
-                   collect path))
-   :test #'path=))
+                   collect path))))

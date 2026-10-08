@@ -1,4 +1,7 @@
-(require :asdf)
+(handler-case (require :asdf)
+  (error ()
+    (load (or #+clisp (ext:getenv "QUICKLISP_SETUP")
+              (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))))
 
 (handler-case
     (progn
@@ -12,7 +15,8 @@
               (lisp-implementation-type) (lisp-implementation-version)
               (software-type) (software-version) (machine-type))
       (dolist (name '("asdf" "cffi" "bordeaux-threads" "uiop" "fiveam"))
-        (format t "~a: ~a~%" name (asdf:component-version (asdf:find-system name))))
+        (format t "~a: ~a~%" name (or (asdf:component-version (asdf:find-system name))
+                                                (namestring (asdf:system-source-directory name)))))
       (let* ((backend (uiop:symbol-call :trivial-notify :backend))
              (expected (uiop:getenv "NOTIFY_EXPECT_BACKEND")))
         (format t "Backend: ~s~%" backend)

@@ -41,6 +41,7 @@ asserts the selected backend, for example `inotify`.
 | Combination | Coverage gap |
 |---|---|
 | LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending in [ticket 6](https://todo.sr.ht/~takeiteasy/trivial-notify/6). |
+| Local ARM64 CCL | Concurrent input opens can interfere with replacement and leave files behind: [compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/9). |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | No GitHub-hosted runner; native bindings remain in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-notify/3). |
 | ABCL | Dedicated WatchService backend remains in [ticket 8](https://todo.sr.ht/~takeiteasy/trivial-notify/8). |
