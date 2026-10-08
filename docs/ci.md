@@ -25,3 +25,10 @@ See [Support](support.md) for verified results and coverage gaps.
 
 [`.build.yml`](../.build.yml) also tests SBCL/Linux on sourcehut pushes.
 Run `tests/test.sh sbcl` locally before pushing.
+
+## Distribution releases
+
+Version tags publish to [takeiteasy's Quicklisp dist](https://github.com/takeiteasy/ql-dist).
+The tag matches the ASDF version, for example `v0.1.0`.
+[The notifier workflow](../.github/workflows/ql-dist.yml) uses the repository
+secret `QL_DIST_TOKEN` to request a distribution build.

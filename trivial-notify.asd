@@ -2,7 +2,7 @@
   :description "Watch files and directories for changes."
   :author "George Watson"
   :license "MIT"
-  :version "0.0.0"
+  :version "0.1.0"
   :depends-on ("cffi" "uiop" "bordeaux-threads" "trivial-notify/kqueue")
   :pathname "notify/"
   :serial t
@@ -20,7 +20,7 @@
   :description "The kqueue calls trivial-notify makes."
   :author "George Watson"
   :license "MIT"
-  :version "0.0.0"
+  :version "0.1.0"
   :depends-on ("cffi")
   :pathname "kqueue/"
   :serial t
