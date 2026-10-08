@@ -61,7 +61,7 @@
                            ((not (minusp watch))
                             (setf (gethash path watches) watch
                                   (gethash watch identities) path))
-                           ((uiop:probe-file* path)
+                           ((existing-path path)
                             (error "Cannot register inotify target: ~a" path))))))))
                (read-events ()
                  (let ((changed nil))

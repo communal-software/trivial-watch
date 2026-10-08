@@ -12,4 +12,4 @@ tasks:
       ln -s "$HOME/trivial-notify" "$HOME/quicklisp/local-projects/trivial-notify"
   - test: |
       cd trivial-notify
-      tests/test.sh sbcl
+      NOTIFY_EXPECT_BACKEND=inotify tests/test.sh sbcl

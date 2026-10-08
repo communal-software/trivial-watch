@@ -54,7 +54,7 @@
                          (request nil)
                          (registered nil))
                      (when (cffi:pointer-eq handle (invalid-handle))
-                       (if (uiop:probe-file* path)
+                       (if (existing-path path)
                            (error "Cannot open Windows directory ~a (error ~d)" path (%last-error))
                            (return-from add nil)))
                      (unwind-protect

@@ -32,7 +32,7 @@
                                              (logior kq:+flag-add+ kq:+flag-clear+)
                                              kq:+note-vnode+)
                              (error "Cannot register kqueue target: ~a" path)))
-                         (when (and (minusp descriptor) (uiop:probe-file* path))
+                         (when (and (minusp descriptor) (existing-path path))
                            (error "Cannot open kqueue target: ~a" path)))))))
                (wait ()
                  (let ((events (kq:wait queue 64 nil)))

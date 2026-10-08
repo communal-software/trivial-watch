@@ -24,10 +24,13 @@
           unless (gethash name seen)
             collect path and do (setf (gethash name seen) t))))
 
+(defun existing-path (path)
+  (ignore-errors (probe-file path)))
+
 (defun normalize-paths (paths)
   (unique-paths
    (mapcar (lambda (path)
-             (or (uiop:probe-file* path :truename t)
+             (or (existing-path path)
                  (error "Watch path does not exist: ~a" path)))
            paths)
    #'namestring))
@@ -86,7 +89,7 @@
                       (if recursive
                           (visit directory)
                           (record directory :directory)))))
-                 ((uiop:probe-file* path) (record path (stamp path))))))
+                 ((existing-path path) (record path (stamp path))))))
       (dolist (path paths) (visit path)))
     (sort (loop for path being the hash-keys of entries using (hash-value value)
                 collect (cons path value))
@@ -115,7 +118,7 @@
 (defun registration-paths (paths state &optional directories-only)
   (unique-paths
    (append (loop for target in (targets paths)
-                 when (uiop:probe-file* target)
+                 when (existing-path target)
                    when (or (not directories-only)
                             (uiop:directory-exists-p target))
                      collect target)
