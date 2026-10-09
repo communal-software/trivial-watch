@@ -11,6 +11,7 @@
   (defun open-kqueue-source (paths state &key interval recursive)
     (declare (ignore interval recursive))
     (let ((queue (trivial-watch.kqueue:open-queue))
+          (open-target (symbol-function '%open))
           (descriptors (make-path-table))
           (identities (make-hash-table)))
       (unless queue (return-from open-kqueue-source nil))
@@ -27,7 +28,7 @@
                      (unless (gethash path wanted-set) (remove-target path)))
                    (dolist (path wanted)
                      (unless (gethash path descriptors)
-                       (let ((descriptor (%open path +watch-open-flags+)))
+                       (let ((descriptor (funcall open-target path +watch-open-flags+)))
                          (unless (minusp descriptor)
                            (setf (gethash path descriptors) descriptor
                                  (gethash descriptor identities) path)

@@ -2,7 +2,7 @@
 
 (defun supported-p ()
   ;; TODO: NetBSD before 11 needs a separate __kevent50 layout (#12).
-  #+netbsd (not (null (cffi:foreign-symbol-pointer "__kevent100" :errorp nil)))
+  #+netbsd (not (null (ignore-errors (cffi:foreign-symbol-pointer "__kevent100"))))
   #+(or darwin freebsd openbsd) t
   #-(or darwin freebsd netbsd openbsd) nil)
 
