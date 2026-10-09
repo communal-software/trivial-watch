@@ -23,7 +23,8 @@ checks both native watching and scanning. Linux runs 102 checks, macOS 98,
 and Windows 94; platform-specific cases account for the difference.
 The runner prints versions, dependencies, architecture, and selected backend.
 
-Local ARM64 macOS 15.7.5 checks also pass on SBCL 2.6.8 and ECL 26.5.5.
+Local ARM64 macOS 15.7.5 checks also pass on SBCL 2.6.8, ECL 26.5.5,
+and CCL 1.13 (v1.13-459-g690ff7ea). Snapshot reads use read-only descriptors on CCL.
 
 ## Running tests
 
@@ -45,7 +46,6 @@ asserts the selected backend, for example `inotify`.
 |---|---|
 | LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending in [ticket 6](https://todo.sr.ht/~takeiteasy/trivial-watch/6). |
 | Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads: [verification ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/10). |
-| Local ARM64 CCL | Concurrent input opens can interfere with replacement and leave files behind: [compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/9). |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | No GitHub-hosted runner; native bindings remain in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-watch/3). |
 | ABCL | Dedicated WatchService backend remains in [ticket 8](https://todo.sr.ht/~takeiteasy/trivial-watch/8). |

@@ -39,7 +39,7 @@
       (funcall release))))
 
 (test a-backend-is-named
-  (is (member (watch:backend) '(:kqueue :inotify :read-directory-changes :scan)))
+  (is (member (watch:backend) '(:kqueue :inotify :read-directory-changes :watch-service :scan)))
   (is (eq (watch:native-p) (not (eq (watch:backend) :scan)))))
 
 (test a-watched-file-reports-its-change
@@ -322,7 +322,7 @@
         (when release (funcall release))
         (when thread (bt2:join-thread thread))))))
 
-#+linux
+#+(and linux (not abcl))
 (test inotify-overflow-and-ignored-records-are-decoded
   (let ((reset nil) (ignored nil))
     (cffi:with-foreign-object (buffer :uint8 32)
@@ -350,3 +350,28 @@
           (is-true (await path :created))
           (delete-file path)
           (is-true (await path :deleted)))))))
+
+(test snapshot-input-does-not-create-missing-files
+  (with-directory
+    (let ((missing (merge-pathnames "missing.txt" *directory*)))
+      (is-false (loop repeat 100 thereis (watch::stamp missing)))
+      (is-false (probe-file missing))
+      (is-false (uiop:directory-files *directory*)))))
+
+(test snapshot-reads-do-not-interfere-with-replacement
+  (with-directory
+    (let* ((file (write-file "résumé.txt" "one"))
+           (stop (bt2:make-semaphore))
+           (reader (bt2:make-thread
+                    (lambda ()
+                      (loop until (bt2:wait-on-semaphore stop :timeout 0)
+                            do (watch::stamp file))))))
+      (unwind-protect
+           (dotimes (index 100)
+             (write-file "résumé.txt" (format nil "value ~d" index)))
+        (bt2:signal-semaphore stop)
+        (bt2:join-thread reader))
+      (is (= 1 (length (uiop:directory-files *directory*))))
+      (is (equal (watch::stamp file) (watch::stamp file)))
+      (delete-file file)
+      (is-false (uiop:directory-files *directory*)))))

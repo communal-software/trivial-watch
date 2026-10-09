@@ -43,9 +43,25 @@
                                    (uiop:pathname-parent-directory-pathname path)
                                    (uiop:pathname-directory-pathname path))))))
 
+(defun open-snapshot-input (file)
+  #-ccl
+  (open file :direction :input :element-type '(unsigned-byte 8)
+             :if-does-not-exist nil)
+  #+ccl
+  ;; CCL's pathname input stream can create files between its two probes.
+  (let ((descriptor (ccl::fd-open (ccl::native-translated-namestring file) 0)))
+    (when (minusp descriptor) (return-from open-snapshot-input nil))
+    (handler-case
+        (ccl::make-fd-stream descriptor :direction :input :interactive nil
+                                       :element-type '(unsigned-byte 8))
+      (error (condition)
+        (ccl::fd-close descriptor)
+        (error condition)))))
+
 (defun stamp (file)
   (ignore-errors
-    (with-open-file (stream file :element-type '(unsigned-byte 8))
+    (with-open-stream (stream (open-snapshot-input file))
+      (unless stream (return-from stamp nil))
       (let ((buffer (make-array 65536 :element-type '(unsigned-byte 8)))
             (size 0)
             (hash 14695981039346656037))
