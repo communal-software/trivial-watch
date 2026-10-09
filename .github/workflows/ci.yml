@@ -11,12 +11,12 @@ on:
       lisp:
         description: Run only this Lisp
         type: choice
-        options: [all, sbcl, ecl, ccl, clisp]
+        options: [all, sbcl, ecl, ccl, clisp, clisp-distro, abcl]
         default: all
       os:
         description: Run only this OS family
         type: choice
-        options: [all, linux, macos, windows]
+        options: [all, linux, macos, windows, freebsd, netbsd, openbsd]
         default: all
 
 concurrency:
@@ -28,6 +28,7 @@ jobs:
     runs-on: ubuntu-24.04
     outputs:
       entries: ${{ steps.matrix.outputs.entries }}
+      bsd_entries: ${{ steps.matrix.outputs.bsd_entries }}
     steps:
       - uses: actions/checkout@v5
       - id: matrix
@@ -43,14 +44,21 @@ jobs:
                      and os.environ['SELECT_OS'] in ('all', e['family'])
                      and (not e.get('verification_only', False)
                           or os.environ['SELECT_LISP'] == e['implementation'])]
-          if not entries:
+          if os.environ['SELECT_LISP'] == 'clisp-distro' and os.environ['SELECT_OS'] in ('all', 'linux'):
+              entries = [dict(implementation='clisp-distro', lisp='clisp', family='linux',
+                              runner='ubuntu-24.04', backend='inotify')]
+          bsd_entries = [e for e in entries if 'vm_version' in e]
+          entries = [e for e in entries if 'vm_version' not in e]
+          if not entries and not bsd_entries:
               raise SystemExit('No configured jobs match these filters')
           with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
               out.write('entries=' + json.dumps(entries) + '\n')
+              out.write('bsd_entries=' + json.dumps(bsd_entries) + '\n')
           PYTHON
 
   test:
     needs: matrix
+    if: needs.matrix.outputs.entries != '[]'
     name: ${{ matrix.implementation }} / ${{ matrix.family }}
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
@@ -64,19 +72,80 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: 40ants/setup-lisp@v4
-        if: matrix.implementation != 'clisp'
+        if: contains(fromJSON('["sbcl","ecl","ccl"]'), matrix.implementation)
         with:
           asdf-system: trivial-watch/tests
           cache: false
       - name: Run test suite
-        if: matrix.implementation != 'clisp'
+        if: contains(fromJSON('["sbcl","ecl","ccl"]'), matrix.implementation)
         shell: lispsh -eo pipefail {0}
-        run: ros -Q run --load tests/run.lisp
-      - name: Verify CLISP
+        run: |
+          ros -Q run --load tests/core.lisp
+          if [ "${{ matrix.family }}" = macos ]; then
+            cc -Wall -Wextra -Werror tests/kqueue-abi.c -o "$RUNNER_TEMP/kqueue-abi"
+            export KQUEUE_ABI_FILE="$RUNNER_TEMP/kqueue-abi.lisp"
+            "$RUNNER_TEMP/kqueue-abi" > "$KQUEUE_ABI_FILE"
+          fi
+          ros -Q run --load tests/run.lisp
+      - uses: actions/setup-java@v4
+        if: matrix.implementation == 'abcl'
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Verify ABCL
+        if: matrix.implementation == 'abcl'
+        shell: bash
+        run: |
+          sh tests/setup-abcl.sh "$RUNNER_TEMP/abcl"
+          ABCL_JAR="$RUNNER_TEMP/abcl/abcl-bin-1.9.2/abcl.jar" tests/test.sh abcl
+      - name: Install CLISP build dependencies
         if: matrix.implementation == 'clisp'
         run: |
           sudo apt-get update
-          sudo apt-get install -y clisp
-          curl -sSfLo "$RUNNER_TEMP/quicklisp.lisp" https://beta.quicklisp.org/quicklisp.lisp
-          clisp -q -norc -x "(progn (load \"$RUNNER_TEMP/quicklisp.lisp\") (funcall (read-from-string \"quicklisp-quickstart:install\")))"
+          sudo apt-get install -y build-essential libffcall-dev libsigsegv-dev libreadline-dev gettext
+      - uses: actions/cache@v4
+        if: matrix.implementation == 'clisp'
+        with:
+          path: ~/threaded-clisp
+          key: clisp-ubuntu24-x64-e63399e8-posix-ffcall-${{ hashFiles('tests/build-clisp.sh') }}
+      - name: Build and verify threaded CLISP
+        if: matrix.implementation == 'clisp'
+        run: |
+          sh tests/build-clisp.sh "$HOME/threaded-clisp"
+          export PATH="$HOME/threaded-clisp/bin:$PATH"
+          curl -fsSL --retry 5 https://beta.quicklisp.org/quicklisp.lisp -o "$HOME/quicklisp.lisp"
+          clisp -q -norc tests/install-quicklisp.lisp
           tests/test.sh clisp
+      - name: Diagnose distro CLISP
+        if: matrix.implementation == 'clisp-distro'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clisp
+          curl -fsSL --retry 5 https://beta.quicklisp.org/quicklisp.lisp -o "$HOME/quicklisp.lisp"
+          clisp -q -norc -x '(load (merge-pathnames "quicklisp.lisp" (user-homedir-pathname))) (quicklisp-quickstart:install)'
+          tests/test.sh clisp
+
+  bsd:
+    needs: matrix
+    if: needs.matrix.outputs.bsd_entries != '[]'
+    name: ${{ matrix.implementation }} / ${{ matrix.family }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.matrix.outputs.bsd_entries) }}
+    steps:
+      - uses: actions/checkout@v5
+      - name: Start BSD VM
+        uses: cross-platform-actions/action@e0b9770014ba65d5e0815f15b74031c3a635f641 # v1.6.0
+        with:
+          operating_system: ${{ matrix.family }}
+          version: ${{ matrix.vm_version }}
+          architecture: x86-64
+          shell: sh
+      - name: Verify BSD bindings and watching
+        shell: cpa.sh {0}
+        run: |
+          sh tests/setup-bsd.sh
+          WATCH_EXPECT_BACKEND=kqueue tests/test.sh ${{ matrix.lisp }}

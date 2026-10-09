@@ -21,14 +21,6 @@
     "backend": "inotify"
   },
   {
-    "implementation": "clisp",
-    "lisp": "clisp",
-    "family": "linux",
-    "runner": "ubuntu-24.04",
-    "backend": "inotify",
-    "verification_only": true
-  },
-  {
     "implementation": "sbcl",
     "lisp": "sbcl-bin",
     "family": "macos",
@@ -55,5 +47,58 @@
     "family": "windows",
     "runner": "windows-2022",
     "backend": "read-directory-changes"
+  },
+  {
+    "implementation": "clisp",
+    "lisp": "clisp",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "inotify",
+    "verification_only": true
+  },
+  {
+    "implementation": "abcl",
+    "lisp": "abcl",
+    "family": "linux",
+    "runner": "ubuntu-24.04",
+    "backend": "watch-service"
+  },
+  {
+    "implementation": "abcl",
+    "lisp": "abcl",
+    "family": "macos",
+    "runner": "macos-15",
+    "backend": "watch-service"
+  },
+  {
+    "implementation": "abcl",
+    "lisp": "abcl",
+    "family": "windows",
+    "runner": "windows-2022",
+    "backend": "watch-service"
+  },
+  {
+    "implementation": "sbcl",
+    "lisp": "sbcl",
+    "family": "freebsd",
+    "runner": "ubuntu-24.04",
+    "backend": "kqueue",
+    "vm_version": "15.1"
+  },
+  {
+    "implementation": "ecl",
+    "lisp": "ecl",
+    "family": "netbsd",
+    "runner": "ubuntu-24.04",
+    "backend": "kqueue",
+    "vm_version": "11.0"
+  },
+  {
+    "implementation": "ecl",
+    "lisp": "ecl",
+    "family": "openbsd",
+    "runner": "ubuntu-24.04",
+    "backend": "kqueue",
+    "vm_version": "7.9"
   }
 ]

@@ -3,8 +3,8 @@
 > **Work in progress.** This project is under development; expect missing features and breaking changes.
 
 Watch files and directories for changes, with the best backend the platform
-has: kqueue on macOS, inotify on Linux, ReadDirectoryChangesW on Windows,
-and a content scan elsewhere.
+has: kqueue on macOS and BSDs, inotify on Linux, ReadDirectoryChangesW on Windows,
+WatchService on ABCL, and a content scan elsewhere.
 
 ```lisp
 (asdf:load-system "trivial-watch")
@@ -29,6 +29,7 @@ for verification evidence and [coverage gaps](docs/support.md#limitations).
 
 - [Watching files](docs/watch.md)
 - [Backends](docs/backends.md)
+- [Backend extensions](docs/backend-extensions.md)
 - [CI](docs/ci.md)
 - [Support and testing](docs/support.md)
 
