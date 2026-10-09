@@ -3,7 +3,8 @@
 #+linux
 (progn
   (cffi:defcfun ("__errno_location" %errno-location) :pointer)
-  (defun unix-error () (cffi:mem-ref (%errno-location) :int))
+  (defun unix-error (&optional (location (%errno-location)))
+    (cffi:mem-ref location :int))
   (cffi:defcfun ("inotify_init1" %inotify-init) :int (flags :int))
   (cffi:defcfun ("inotify_add_watch" %inotify-add) :int
     (descriptor :int) (path :string) (mask :uint32))
@@ -65,7 +66,8 @@
                            ((existing-path path)
                             (error "Cannot register inotify target: ~a" path))))))))
                (read-events ()
-                 (let ((changed nil))
+                 (let ((changed nil)
+                       (error-location (%errno-location)))
                    (cffi:with-foreign-object (buffer :uint8 65536)
                      (loop for count = (%read descriptor buffer 65536)
                            do (cond
@@ -80,9 +82,9 @@
                                   #'reset)
                                  (setf changed t))
                                 ((zerop count) (error "inotify descriptor closed"))
-                                ((= (unix-error) 4))
-                                ((= (unix-error) 11) (return))
-                                (t (error "inotify read failed: ~d" (unix-error))))))
+                                ((= (unix-error error-location) 4))
+                                ((= (unix-error error-location) 11) (return))
+                                (t (error "inotify read failed: ~d" (unix-error error-location))))))
                    changed))
                (wait ()
                  (cffi:with-foreign-object (fds '(:struct pollfd) 2)
@@ -92,9 +94,10 @@
                          do (setf (cffi:foreign-slot-value entry '(:struct pollfd) 'descriptor) fd
                                   (cffi:foreign-slot-value entry '(:struct pollfd) 'events) 1
                                   (cffi:foreign-slot-value entry '(:struct pollfd) 'returned) 0))
-                   (let ((ready (%poll fds 2 -1)))
-                     (when (and (minusp ready) (/= (unix-error) 4))
-                       (error "inotify poll failed: ~d" (unix-error)))
+                   (let* ((error-location (%errno-location))
+                          (ready (%poll fds 2 -1)))
+                     (when (and (minusp ready) (/= (unix-error error-location) 4))
+                       (error "inotify poll failed: ~d" (unix-error error-location)))
                      (when (plusp ready)
                        (if (plusp (cffi:foreign-slot-value
                                    (cffi:mem-aptr fds '(:struct pollfd) 1)

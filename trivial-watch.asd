@@ -50,6 +50,7 @@
   :components ((:file "package")
                (:file "watch")
                (:file "backends")
+               (:file "inotify" :if-feature (:and :linux (:not :abcl)))
                (:file "kqueue" :if-feature (:and (:not :abcl)
                                                  (:or :darwin :freebsd :netbsd :openbsd)))
                (:file "jvm" :if-feature :abcl))
