@@ -24,6 +24,8 @@ reconcile registrations before callbacks. Linux queue overflow and Windows lost
 notifications trigger snapshot reconciliation.[^native]
 
 Native setup failure returns nil rather than silently selecting scanning.
+Interrupted kqueue waits return an empty batch. Other kqueue wait failures stop
+the watch, release its resources, and follow the [worker error contract](watch.md#releasing-a-watch).
 
 ## Extensions
 
@@ -43,8 +45,6 @@ the timer wait.
 - NetBSD before 11 uses scanning; its older versioned ABI is tracked in
   [the compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/12).
 - JVM notification latency and filesystem coverage depend on the Java provider.[^jvm]
-- Permanent kqueue wait errors are treated as empty batches; error propagation
-  is tracked in [ticket 13](https://todo.sr.ht/~takeiteasy/trivial-watch/13).
 - Content snapshots have [event precision limits](watch.md#limitations).
 
 [^native]: kqueue tracks vnode replacement and reopens affected descriptors.

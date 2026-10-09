@@ -39,6 +39,8 @@
     (events :pointer) (event-count #+netbsd :size #-netbsd :int) (timeout :pointer))
 
   (cffi:defcfun ("close" %close) :int (descriptor :int))
+  (cffi:defcfun (#+(or darwin freebsd) "__error"
+                #+(or netbsd openbsd) "__errno" %errno-location) :pointer)
 
   (defun open-queue ()
     "A new queue, or nil if the kernel would not give one."
@@ -81,14 +83,22 @@
 
   (defun wait (queue count timeout)
     "Up to COUNT events, as (ident filter flags fflags) lists. Waits TIMEOUT
-seconds, or forever if it is nil."
+seconds, or forever if it is nil. Returns nil on timeout or interruption;
+other syscall failures signal an error."
+    (declare (notinline %kevent))
     (cffi:with-foreign-objects ((events '(:struct kevent) count)
                                 (timespec '(:struct timespec)))
-      (let ((ready (%kevent queue (cffi:null-pointer) 0 events count
-                            (if timeout
-                                (%set-timeout timespec timeout)
-                                (cffi:null-pointer)))))
-        (loop for index from 0 below (max ready 0)
+      (let* ((error-location (%errno-location))
+             (ready (%kevent queue (cffi:null-pointer) 0 events count
+                             (if timeout
+                                 (%set-timeout timespec timeout)
+                                 (cffi:null-pointer)))))
+        (when (minusp ready)
+          (let ((errno (cffi:mem-ref error-location :int)))
+            (if (= errno 4)
+                (return-from wait nil)
+                (error "kevent wait failed for queue ~d (errno ~d)" queue errno))))
+        (loop for index from 0 below ready
               for event = (cffi:mem-aptr events '(:struct kevent) index)
               collect (list (cffi:foreign-slot-value event '(:struct kevent)
                                                      'ident)

@@ -2,6 +2,92 @@
 
 (in-suite :trivial-watch)
 
+(test kqueue-wait-reports-an-invalid-queue
+  (let ((failure (nth-value 1 (ignore-errors (trivial-watch.kqueue:wait -1 1 0)))))
+    (is (typep failure 'error))
+    (is-true (search "kevent" (princ-to-string failure)))
+    (is-true (search "queue -1" (princ-to-string failure)))
+    (is-true (search "errno 9" (princ-to-string failure)))))
+
+(test kqueue-wait-ignores-stale-errno-on-timeout
+  (let ((queue (trivial-watch.kqueue:open-queue)))
+    (is-true queue)
+    (unwind-protect
+         (progn
+           (setf (cffi:mem-ref (trivial-watch.kqueue::%errno-location) :int) 9)
+           (is-false (trivial-watch.kqueue:wait queue 1 0)))
+      (trivial-watch.kqueue:close-queue queue))))
+
+(test kqueue-interrupted-wait-returns-without-retrying
+  (let ((queue (trivial-watch.kqueue:open-queue))
+        (kevent (symbol-function 'trivial-watch.kqueue::%kevent))
+        (attempts 0))
+    (is-true queue)
+    (unwind-protect
+         (progn
+           (is-true (trivial-watch.kqueue:change queue 0 trivial-watch.kqueue:+filter-user+
+                                                trivial-watch.kqueue:+flag-add+ 0))
+           (trivial-watch.kqueue:wake queue)
+           (setf (symbol-function 'trivial-watch.kqueue::%kevent)
+                 (lambda (&rest arguments)
+                   (if (= 1 (incf attempts))
+                       (progn
+                         (setf (cffi:mem-ref (trivial-watch.kqueue::%errno-location) :int) 4)
+                         -1)
+                       (apply kevent arguments))))
+           (is-false (trivial-watch.kqueue:wait queue 1 nil))
+           (is (= 1 attempts))
+           (let ((events (trivial-watch.kqueue:wait queue 1 0)))
+             (is (= 2 attempts))
+             (is (= trivial-watch.kqueue:+filter-user+ (second (first events))))))
+      (setf (symbol-function 'trivial-watch.kqueue::%kevent) kevent)
+      (trivial-watch.kqueue:close-queue queue))))
+
+(test kqueue-wait-failure-stops-and-closes-the-worker
+  (with-directory
+    (let ((entered (bt2:make-semaphore))
+          (proceed (bt2:make-semaphore))
+          (closed (bt2:make-semaphore))
+          (waits 0)
+          (closes 0)
+          (callbacks 0)
+          (release nil))
+      (unwind-protect
+           (progn
+             (setf release
+                   (trivial-watch::start-watch
+                    (list *directory*) (lambda () (incf callbacks)) nil nil
+                    (lambda (paths state)
+                      (let* ((source (trivial-watch::open-kqueue-source paths state))
+                             (close (trivial-watch::source-close source)))
+                        (setf (trivial-watch::source-wait source)
+                              (lambda ()
+                                (when (= 1 (incf waits))
+                                  (bt2:signal-semaphore entered)
+                                  (unless (bt2:wait-on-semaphore proceed :timeout 5)
+                                    (error "Timed out waiting to inject kevent failure")))
+                                (trivial-watch.kqueue:wait -1 1 0))
+                              (trivial-watch::source-close source)
+                              (lambda ()
+                                (funcall close)
+                                (incf closes)
+                                (bt2:signal-semaphore closed)))
+                        source))))
+             (is-true release)
+             (is-true (bt2:wait-on-semaphore entered :timeout 5))
+             (bt2:signal-semaphore proceed)
+             (is-true (bt2:wait-on-semaphore closed :timeout 5))
+             (let ((failure (nth-value 1 (ignore-errors (funcall release)))))
+               (is (typep failure 'error))
+               (is-true (search "kevent" (princ-to-string failure)))
+               (is-true (search "errno 9" (princ-to-string failure))))
+             (signals error (funcall release))
+             (is (= 1 waits))
+             (is (= 1 closes))
+             (is (zerop callbacks)))
+        (bt2:signal-semaphore proceed)
+        (when release (ignore-errors (funcall release)))))))
+
 (test kqueue-bindings-match-system-headers
   (let ((file (uiop:getenv "KQUEUE_ABI_FILE")))
     (if (not file)
