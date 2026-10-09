@@ -6,7 +6,7 @@
   (with-directory
     (let ((file (write-file "replace.txt" "one")))
       (with-open-stream (stream (trivial-watch::open-snapshot-input file))
-        (write-file "replace.txt" "two")
+        (uiop:rename-file-overwriting-target (write-file "temporary.txt" "two") file)
         (is (= (char-code #\o) (read-byte stream))))
       (is-true (trivial-watch::stamp file)))))
 
