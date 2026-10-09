@@ -3,13 +3,13 @@ packages:
   - curl
   - sbcl
 sources:
-  - https://git.sr.ht/~takeiteasy/trivial-notify
+  - https://git.sr.ht/~takeiteasy/trivial-watch
 tasks:
   - quicklisp: |
       curl -fsSL --retry 5 -o quicklisp.lisp https://beta.quicklisp.org/quicklisp.lisp
       sbcl --non-interactive --load quicklisp.lisp \
            --eval '(quicklisp-quickstart:install)'
-      ln -s "$HOME/trivial-notify" "$HOME/quicklisp/local-projects/trivial-notify"
+      ln -s "$HOME/trivial-watch" "$HOME/quicklisp/local-projects/trivial-watch"
   - test: |
-      cd trivial-notify
-      NOTIFY_EXPECT_BACKEND=inotify tests/test.sh sbcl
+      cd trivial-watch
+      WATCH_EXPECT_BACKEND=inotify tests/test.sh sbcl

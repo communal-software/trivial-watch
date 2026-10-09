@@ -1,6 +1,6 @@
-(in-package #:trivial-notify/tests)
+(in-package #:trivial-watch/tests)
 
-(in-suite :trivial-notify)
+(in-suite :trivial-watch)
 
 (defvar *directory* nil)
 
@@ -8,7 +8,7 @@
   "Run BODY with *DIRECTORY* a directory of its own, removed afterwards."
   `(let ((*directory* (truename (ensure-directories-exist
                        (merge-pathnames
-                        (format nil "trivial-notify-~36r/" (random (expt 2 48)))
+                        (format nil "trivial-watch-~36r/" (random (expt 2 48)))
                         (uiop:temporary-directory))))))
      (unwind-protect (progn ,@body)
        (uiop:delete-directory-tree *directory* :validate t))))
@@ -24,11 +24,11 @@
   "Whether CHANGE, run against a watch on WATCH-PATHS, reaches the callback."
   (let* ((seen (bt2:make-semaphore))
          (release (ecase backend
-                    (:default (notify:watch watch-paths
+                    (:default (watch:watch watch-paths
                                             (lambda ()
                                               (bt2:signal-semaphore seen))
                                             :interval interval))
-                    (:scan (notify::%scan-watch
+                    (:scan (watch::%scan-watch
                             watch-paths
                             (lambda () (bt2:signal-semaphore seen))
                             interval)))))
@@ -39,8 +39,8 @@
       (funcall release))))
 
 (test a-backend-is-named
-  (is (member (notify:backend) '(:kqueue :inotify :read-directory-changes :scan)))
-  (is (eq (notify:native-p) (not (eq (notify:backend) :scan)))))
+  (is (member (watch:backend) '(:kqueue :inotify :read-directory-changes :scan)))
+  (is (eq (watch:native-p) (not (eq (watch:backend) :scan)))))
 
 (test a-watched-file-reports-its-change
   (with-directory
@@ -75,7 +75,7 @@
   (with-directory
     (let* ((path (write-file "released.txt" "one"))
            (count 0)
-           (release (notify:watch (list path)
+           (release (watch:watch (list path)
                                   (lambda () (incf count))
                                   :interval 0.1)))
       (is-true release)
@@ -85,9 +85,9 @@
       (is (zerop count)))))
 
 (test the-targets-of-a-path-include-its-directory
-  (let ((targets (notify::targets (list #p"/tmp/trivial-notify/a.lisp"))))
-    (is (member "/tmp/trivial-notify/a.lisp" targets :test #'string=))
-    (is (member "/tmp/trivial-notify/" targets :test #'string=))))
+  (let ((targets (watch::targets (list #p"/tmp/trivial-watch/a.lisp"))))
+    (is (member "/tmp/trivial-watch/a.lisp" targets :test #'string=))
+    (is (member "/tmp/trivial-watch/" targets :test #'string=))))
 
 (defmacro with-event-watch ((paths &key recursive) &body body)
   `(dolist (mode '(:native :scan))
@@ -98,9 +98,9 @@
                         (bt2:with-lock-held (lock) (push batch batches))
                         (bt2:signal-semaphore seen)))
             (release (if (eq mode :scan)
-                         (notify::%scan-watch ,paths callback 0.05
+                         (watch::%scan-watch ,paths callback 0.05
                                              :events t :recursive ,recursive)
-                         (notify:watch ,paths callback :interval 0.05
+                         (watch:watch ,paths callback :interval 0.05
                                        :events t :recursive ,recursive))))
        (is-true release)
        (unwind-protect
@@ -111,8 +111,8 @@
                                       (let ((found (loop for batch in batches
                                                          thereis (find-if
                                                                   (lambda (event)
-                                                                    (and (notify::path= (namestring (notify:event-path event)) (namestring path))
-                                                                         (eq (notify:event-kind event) kind)))
+                                                                    (and (watch::path= (namestring (watch:event-path event)) (namestring path))
+                                                                         (eq (watch:event-kind event) kind)))
                                                                   batch))))
                                         (when found
                                           (setf batches (mapcar (lambda (batch) (remove found batch)) batches))
@@ -182,11 +182,11 @@
 (test overlapping-paths-produce-one-event-per-path
   (with-directory
     (let* ((path (write-file "overlap.txt" "one"))
-           (before (notify::snapshot (list path *directory*))))
+           (before (watch::snapshot (list path *directory*))))
       (write-file "overlap.txt" "two")
-      (let ((batch (notify::snapshot-events before (notify::snapshot (list path *directory*)))))
+      (let ((batch (watch::snapshot-events before (watch::snapshot (list path *directory*)))))
         (is (= 1 (length batch)))
-        (is (eq :modified (notify:event-kind (first batch))))))))
+        (is (eq :modified (watch:event-kind (first batch))))))))
 
 (test unicode-paths-are-watched
   (with-directory
@@ -199,8 +199,8 @@
   (with-directory
     (dolist (mode '(:native :scan))
       (let ((release (if (eq mode :scan)
-                         (notify::%scan-watch (list *directory*) (lambda ()) 60)
-                         (notify:watch (list *directory*) (lambda ()))))
+                         (watch::%scan-watch (list *directory*) (lambda ()) 60)
+                         (watch:watch (list *directory*) (lambda ()))))
             (start (get-internal-real-time)))
         (is-true release)
         (funcall release)
@@ -214,8 +214,8 @@
              (release nil)
              (callback (lambda () (funcall release) (bt2:signal-semaphore done))))
         (setf release (if (eq mode :scan)
-                          (notify::%scan-watch (list *directory*) callback 0.05)
-                          (notify:watch (list *directory*) callback)))
+                          (watch::%scan-watch (list *directory*) callback 0.05)
+                          (watch:watch (list *directory*) callback)))
         (is-true release)
         (unwind-protect
              (progn
@@ -225,14 +225,14 @@
 
 (test failed-setup-returns-nil
   (with-directory
-    (is-false (notify:watch (list (merge-pathnames "missing.txt" *directory*)) (lambda ())))
-    (is-false (notify:watch nil (lambda ())))
-    (is-false (notify:watch (list *directory* (merge-pathnames "missing.txt" *directory*))
+    (is-false (watch:watch (list (merge-pathnames "missing.txt" *directory*)) (lambda ())))
+    (is-false (watch:watch nil (lambda ())))
+    (is-false (watch:watch (list *directory* (merge-pathnames "missing.txt" *directory*))
                             (lambda ())))))
 
 (test snapshot-renames-are-delete-and-create
-  (let ((batch (notify::snapshot-events '(("/old" . (1 . 2))) '(("/new" . (1 . 2))))))
-    (is (equal '(:created :deleted) (mapcar #'notify:event-kind batch)))))
+  (let ((batch (watch::snapshot-events '(("/old" . (1 . 2))) '(("/new" . (1 . 2))))))
+    (is (equal '(:created :deleted) (mapcar #'watch:event-kind batch)))))
 
 #+unix
 (test recursive-watches-skip-directory-symlinks
@@ -251,11 +251,11 @@
   (with-directory
     (let ((closed nil))
       (is-false
-       (notify::start-watch
+       (watch::start-watch
         (list *directory*) (lambda ()) nil nil
         (lambda (paths state)
           (declare (ignore paths state))
-          (notify::make-source
+          (watch::make-source
            :refresh (lambda (state) (declare (ignore state)) (error "Injected registration failure"))
            :close (lambda () (setf closed t))))))
       (is-true closed))))
@@ -271,12 +271,12 @@
            (first t)
            (refreshes 0)
            (release
-             (notify::start-watch
+             (watch::start-watch
               (list directory) (lambda (events) (setf batch events) (bt2:signal-semaphore seen))
               t t
               (lambda (paths state)
                 (declare (ignore paths state))
-                (notify::make-source
+                (watch::make-source
                  :wait (lambda ()
                          (if first
                              (progn
@@ -295,7 +295,7 @@
            (progn
              (is-true (bt2:wait-on-semaphore seen :timeout 5))
              (is (> refreshes 1))
-             (is (equal '(:created :modified) (mapcar #'notify:event-kind batch))))
+             (is (equal '(:created :modified) (mapcar #'watch:event-kind batch))))
         (when release (funcall release))))))
 
 (test external-release-waits-for-an-active-callback
@@ -303,7 +303,7 @@
     (let* ((entered (bt2:make-semaphore))
            (resume (bt2:make-semaphore))
            (released (bt2:make-semaphore))
-           (release (notify:watch (list *directory*)
+           (release (watch:watch (list *directory*)
                                   (lambda ()
                                     (bt2:signal-semaphore entered)
                                     (bt2:wait-on-semaphore resume))))
@@ -328,15 +328,15 @@
     (cffi:with-foreign-object (buffer :uint8 32)
       (loop for offset in '(0 16)
             for mask in '(#x4000 #x8000)
-            do (cffi:with-foreign-slots ((notify::watch notify::mask notify::cookie notify::length)
-                                         (cffi:inc-pointer buffer offset) (:struct notify::inotify-event))
-                 (setf notify::watch 42 notify::mask mask notify::cookie 0 notify::length 0)))
-      (is-true (notify::decode-inotify-events buffer 32
+            do (cffi:with-foreign-slots ((watch::watch watch::mask watch::cookie watch::length)
+                                         (cffi:inc-pointer buffer offset) (:struct watch::inotify-event))
+                 (setf watch::watch 42 watch::mask mask watch::cookie 0 watch::length 0)))
+      (is-true (watch::decode-inotify-events buffer 32
                                             (lambda (watch) (setf ignored watch))
                                             (lambda () (setf reset t))))
       (is-true reset)
       (is (= 42 ignored))
-      (signals error (notify::decode-inotify-events buffer 1 #'identity (lambda ()))))))
+      (signals error (watch::decode-inotify-events buffer 1 #'identity (lambda ()))))))
 
 (test a-requested-directory-can-be-deleted-and-recreated
   (with-directory

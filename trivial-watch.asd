@@ -1,10 +1,10 @@
-(defsystem "trivial-notify"
+(defsystem "trivial-watch"
   :description "Watch files and directories for changes."
   :author "George Watson"
   :license "MIT"
-  :version "0.1.0"
-  :depends-on ("cffi" "uiop" "bordeaux-threads" "trivial-notify/kqueue")
-  :pathname "notify/"
+  :version "0.1.1"
+  :depends-on ("cffi" "uiop" "bordeaux-threads" "trivial-watch/kqueue")
+  :pathname "watch/"
   :serial t
   :components ((:file "package")
                (:file "files")
@@ -14,25 +14,25 @@
                (:file "windows")
                (:file "scan")
                (:file "watch"))
-  :in-order-to ((test-op (test-op "trivial-notify/tests"))))
+  :in-order-to ((test-op (test-op "trivial-watch/tests"))))
 
-(defsystem "trivial-notify/kqueue"
-  :description "The kqueue calls trivial-notify makes."
+(defsystem "trivial-watch/kqueue"
+  :description "The kqueue calls trivial-watch makes."
   :author "George Watson"
   :license "MIT"
-  :version "0.1.0"
+  :version "0.1.1"
   :depends-on ("cffi")
   :pathname "kqueue/"
   :serial t
   :components ((:file "package")
                (:file "kqueue")))
 
-(defsystem "trivial-notify/tests"
-  :depends-on ("trivial-notify" "fiveam" "bordeaux-threads" "uiop")
+(defsystem "trivial-watch/tests"
+  :depends-on ("trivial-watch" "fiveam" "bordeaux-threads" "uiop")
   :pathname "tests/"
   :serial t
   :components ((:file "package")
-               (:file "notify"))
+               (:file "watch"))
   :perform (test-op (o c)
-             (unless (symbol-call :fiveam :run! :trivial-notify)
-               (error "trivial-notify tests failed"))))
+             (unless (symbol-call :fiveam :run! :trivial-watch)
+               (error "trivial-watch tests failed"))))

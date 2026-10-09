@@ -10,7 +10,7 @@ otherwise. `(backend)` returns its keyword; `(native-p)` is true for native back
 | Windows | ReadDirectoryChangesW | `:read-directory-changes` |
 | FreeBSD, NetBSD, OpenBSD, other platforms | Content scan | `:scan` |
 
-Every backend uses the same [watch API](notify.md), path filtering, event batches,
+Every backend uses the same [watch API](watch.md), path filtering, event batches,
 and optional recursion. There is no Lisp implementation allowlist: implementations
 load the ordinary CFFI and threading dependencies and attempt the platform backend.
 See [Support](support.md) for verification evidence.
@@ -32,10 +32,10 @@ the timer wait.
 ## Limitations
 
 - BSD kqueue layouts require separate bindings and platform tests:
-  [BSD backend ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/3).
+  [BSD backend ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/3).
 - ABCL's dedicated JVM backend is tracked in
-  [the WatchService ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/8).
-- Content snapshots have [event precision limits](notify.md#limitations).
+  [the WatchService ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/8).
+- Content snapshots have [event precision limits](watch.md#limitations).
 
 [^native]: kqueue tracks vnode replacement and reopens affected descriptors.
     Linux uses nonblocking inotify reads, `poll`, and a shutdown pipe. Windows uses

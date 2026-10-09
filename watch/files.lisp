@@ -1,4 +1,4 @@
-(in-package #:trivial-notify)
+(in-package #:trivial-watch)
 
 (defstruct (event (:constructor %make-event (path kind)))
   (path nil :read-only t)

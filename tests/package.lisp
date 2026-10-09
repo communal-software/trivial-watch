@@ -1,7 +1,7 @@
-(defpackage #:trivial-notify/tests
+(defpackage #:trivial-watch/tests
   (:use #:cl #:fiveam)
-  (:local-nicknames (#:notify #:trivial-notify)))
+  (:local-nicknames (#:watch #:trivial-watch)))
 
-(in-package #:trivial-notify/tests)
+(in-package #:trivial-watch/tests)
 
-(def-suite :trivial-notify)
+(def-suite :trivial-watch)

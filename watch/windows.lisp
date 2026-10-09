@@ -1,4 +1,4 @@
-(in-package #:trivial-notify)
+(in-package #:trivial-watch)
 
 #+(or windows win32 mswindows)
 (progn

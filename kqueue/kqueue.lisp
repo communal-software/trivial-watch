@@ -1,9 +1,9 @@
-;;;; kqueue.lisp — the kqueue calls trivial-notify makes
+;;;; kqueue.lisp — the kqueue calls trivial-watch makes
 ;;;;
 ;;;; Darwin only. Every BSD lays struct kevent out differently, so each
 ;;;; needs its own binding, tested on the platform.
 
-(in-package #:trivial-notify.kqueue)
+(in-package #:trivial-watch.kqueue)
 
 (defun supported-p ()
   #+darwin t

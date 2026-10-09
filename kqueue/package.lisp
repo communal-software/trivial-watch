@@ -1,4 +1,4 @@
-(defpackage #:trivial-notify.kqueue
+(defpackage #:trivial-watch.kqueue
   (:use #:cl)
   (:export #:supported-p
            #:+filter-vnode+ #:+filter-user+

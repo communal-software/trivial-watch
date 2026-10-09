@@ -1,11 +1,11 @@
-(in-package #:trivial-notify)
+(in-package #:trivial-watch)
 
 (defstruct source wait refresh wake close)
 
 (defun start-watch (paths callback recursive events opener)
   (let ((source nil)
         (thread nil)
-        (lock (bt2:make-lock :name "trivial-notify lifecycle"))
+        (lock (bt2:make-lock :name "trivial-watch lifecycle"))
         (finished (bt2:make-condition-variable))
         (running t)
         (closed nil)
@@ -52,7 +52,7 @@
             (unless source (return-from start-watch nil))
             (let ((state (settle paths recursive)))
               (setf thread (bt2:make-thread (lambda () (run paths state))
-                                           :name "trivial-notify")))
+                                           :name "trivial-watch")))
             (lambda ()
               (bt2:with-lock-held (lock)
                 (when running

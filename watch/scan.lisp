@@ -1,4 +1,4 @@
-(in-package #:trivial-notify)
+(in-package #:trivial-watch)
 
 (defun %scan-watch (paths callback interval &key recursive events)
   (start-watch

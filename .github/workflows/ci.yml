@@ -60,13 +60,13 @@ jobs:
         include: ${{ fromJSON(needs.matrix.outputs.entries) }}
     env:
       LISP: ${{ matrix.lisp }}
-      NOTIFY_EXPECT_BACKEND: ${{ matrix.backend }}
+      WATCH_EXPECT_BACKEND: ${{ matrix.backend }}
     steps:
       - uses: actions/checkout@v5
       - uses: 40ants/setup-lisp@v4
         if: matrix.implementation != 'clisp'
         with:
-          asdf-system: trivial-notify/tests
+          asdf-system: trivial-watch/tests
           cache: false
       - name: Run test suite
         if: matrix.implementation != 'clisp'

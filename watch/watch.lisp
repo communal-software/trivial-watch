@@ -1,4 +1,4 @@
-(in-package #:trivial-notify)
+(in-package #:trivial-watch)
 
 (defun backend ()
   "The platform backend selected for WATCH."

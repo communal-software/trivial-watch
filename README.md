@@ -1,4 +1,4 @@
-# trivial-notify
+# trivial-watch
 
 > **Work in progress.** This project is under development; expect missing features and breaking changes.
 
@@ -7,9 +7,9 @@ has: kqueue on macOS, inotify on Linux, ReadDirectoryChangesW on Windows,
 and a content scan elsewhere.
 
 ```lisp
-(asdf:load-system "trivial-notify")
+(asdf:load-system "trivial-watch")
 
-(trivial-notify:watch (list #p"src/") (lambda () (print :changed)))
+(trivial-watch:watch (list #p"src/") (lambda () (print :changed)))
 ```
 
 ## Support
@@ -27,7 +27,7 @@ for verification evidence and [coverage gaps](docs/support.md#limitations).
 
 ## Docs
 
-- [Watching files](docs/notify.md)
+- [Watching files](docs/watch.md)
 - [Backends](docs/backends.md)
 - [CI](docs/ci.md)
 - [Support and testing](docs/support.md)

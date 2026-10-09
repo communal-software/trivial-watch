@@ -4,7 +4,7 @@
 It returns a release function, or nil when setup fails.
 
 ```lisp
-(let ((release (trivial-notify:watch (list #p"src/main.lisp")
+(let ((release (trivial-watch:watch (list #p"src/main.lisp")
                                     (lambda () (print :changed)))))
   (when release
     ;; Keep RELEASE until the watch is no longer needed.
@@ -28,12 +28,12 @@ siblings do not trigger callbacks.
 ## Event batches
 
 ```lisp
-(trivial-notify:watch
+(trivial-watch:watch
  (list #p"src/")
  (lambda (batch)
    (dolist (event batch)
-     (format t "~a ~a~%" (trivial-notify:event-kind event)
-                         (trivial-notify:event-path event))))
+     (format t "~a ~a~%" (trivial-watch:event-kind event)
+                         (trivial-watch:event-path event))))
  :events t :recursive t)
 ```
 
@@ -66,7 +66,7 @@ warning, and is re-signaled by a later external release.
 - Snapshot reads can observe a file during a write, producing intermediate batches.
 - Native registrations use OS resources proportional to the covered paths;
   snapshots read covered files after notifications. Narrowing those reads is
-  tracked in [the performance ticket](https://todo.sr.ht/~takeiteasy/trivial-notify/11).
+  tracked in [the performance ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/11).
 - Implementation verification gaps are listed in [Support](support.md#limitations).
 
 [^snapshots]: Snapshots hash files in 64 KiB chunks using FNV-1a and include file
