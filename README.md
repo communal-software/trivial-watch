@@ -20,7 +20,7 @@ WatchService on ABCL, and a content scan elsewhere.
 | ECL | CI | CI, ARM64 | Untested |
 | CCL | CI | CI, Intel | Untested |
 | ABCL | CI | CI, ARM64 | CI |
-| CLISP | Distro build fails dependency check | Untested | Untested |
+| CLISP | CI, threaded source build | Untested | Untested |
 | LispWorks, Allegro | Untested | Untested | Untested |
 
 Untested implementations are free to attempt loading. See [support details](docs/support.md)

@@ -382,3 +382,15 @@
       (is (equal (trivial-watch::stamp file) (trivial-watch::stamp file)))
       (delete-file file)
       (is-false (uiop:directory-files *directory*)))))
+
+(test snapshot-stamps-cover-binary-block-boundaries
+  (with-directory
+    (let ((file (merge-pathnames "binary.dat" *directory*))
+          (bytes (make-array 65537 :element-type '(unsigned-byte 8))))
+      (dotimes (index (length bytes)) (setf (aref bytes index) (mod index 256)))
+      (with-open-file (stream file :direction :output :element-type '(unsigned-byte 8))
+        (write-sequence bytes stream))
+      (is (equal '(65537 . 8563510682543896543) (trivial-watch::stamp file)))
+      (with-open-file (stream file :direction :output :element-type '(unsigned-byte 8)
+                                   :if-exists :supersede))
+      (is (equal '(0 . 14695981039346656037) (trivial-watch::stamp file))))))

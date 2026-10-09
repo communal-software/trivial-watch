@@ -41,9 +41,7 @@ jobs:
           entries = json.load(open('.github/ci-matrix.json'))
           entries = [e for e in entries
                      if os.environ['SELECT_LISP'] in ('all', e['implementation'])
-                     and os.environ['SELECT_OS'] in ('all', e['family'])
-                     and (not e.get('verification_only', False)
-                          or os.environ['SELECT_LISP'] == e['implementation'])]
+                     and os.environ['SELECT_OS'] in ('all', e['family'])]
           if os.environ['SELECT_LISP'] == 'clisp-distro' and os.environ['SELECT_OS'] in ('all', 'linux'):
               entries = [dict(implementation='clisp-distro', lisp='clisp', family='linux',
                               runner='ubuntu-24.04', backend='inotify')]

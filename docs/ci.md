@@ -9,7 +9,7 @@ The configured implementation/OS pairs live in
 |---|---|
 | Code push to `trunk` or pull request | Full verified matrix |
 | Docs-only change | None |
-| Manual dispatch | Filter by Lisp and OS; select CLISP for source-build verification or clisp-distro for the distro diagnostic |
+| Manual dispatch | Filter by Lisp and OS; select clisp-distro for the distro diagnostic |
 
 Jobs assert the selected backend and print implementation, OS, architecture, and
 dependency versions. Failed jobs fail the workflow; newer pushes cancel older
@@ -28,7 +28,7 @@ gh workflow run ci.yml -f lisp=ecl -f os=macos
 | FreeBSD 15.1 | SBCL | BSD VM, packages |
 | NetBSD 11.0 | ECL 26.5.5 | BSD VM, threaded source build |
 | OpenBSD 7.9 | ECL | BSD VM, packages |
-| Ubuntu 24.04 | Threaded CLISP | Pinned source build; manual verification |
+| Ubuntu 24.04 | Threaded CLISP | Pinned source build, cached installation |
 
 BSD jobs use the pinned `cross-platform-actions` v1.6.0 release on Ubuntu hosts.
 Each guest checks threading, compares CFFI bindings with a C header probe, then
@@ -52,9 +52,8 @@ gh workflow run ci.yml -f lisp=clisp-distro -f os=linux
 gh workflow run ci.yml -f lisp=ecl -f os=netbsd
 ```
 
-The distro diagnostic retains the expected dependency failure. Source-built CLISP
-remains outside the ordinary matrix until verification succeeds. See
-[Support limitations](support.md#limitations) for its verification status.
+Source-built CLISP is part of the ordinary matrix. The distro diagnostic retains
+the expected dependency failure; see [Support limitations](support.md#limitations).
 
 [`.build.yml`](../.build.yml) also tests SBCL/Linux on sourcehut pushes.
 Run `tests/test.sh sbcl` locally before pushing.
