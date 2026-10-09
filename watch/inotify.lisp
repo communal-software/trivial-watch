@@ -33,7 +33,8 @@
                (incf offset (+ 16 length))))
     (plusp count))
 
-  (defun open-inotify-source (paths state)
+  (defun open-inotify-source (paths state &key interval recursive)
+    (declare (ignore interval recursive))
     (let ((descriptor (%inotify-init #x80800))
           (reader nil) (writer nil)
           (watches (make-path-table))
@@ -119,5 +120,5 @@
                          (%write writer byte 1)))))
           (error (condition) (cleanup) (error condition))))))
 
-  (defun %inotify-watch (paths callback &key recursive events)
-    (start-watch paths callback recursive events #'open-inotify-source)))
+  (register-backend :inotify #'open-inotify-source)
+  (setf *default-backend* :inotify))

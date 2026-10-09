@@ -1,0 +1,7 @@
+(assert #+sbcl (member :sb-thread *features*)
+        #+ecl (member :threads *features*)
+        #+clisp (member :mt *features*)
+        #-(or sbcl ecl clisp) t)
+(load (merge-pathnames "quicklisp.lisp" (user-homedir-pathname)))
+(quicklisp-quickstart:install)
+(ql:quickload '("bordeaux-threads" #-abcl "cffi"))

@@ -1,24 +1,30 @@
 (in-package #:trivial-watch)
 
-(defun backend ()
-  "The platform backend selected for WATCH."
-  (cond #+darwin ((kq:supported-p) :kqueue)
-        #+linux (t :inotify)
-        #+(or windows win32 mswindows) (t :read-directory-changes)
-        (t :scan)))
+(defvar *backends* (make-hash-table))
+(defvar *default-backend* :scan)
 
-(defun native-p ()
-  "Whether WATCH waits on native events instead of scanning on a timer."
-  (not (eq (backend) :scan)))
+(defun register-backend (name opener &key (native-p t))
+  "Register OPENER for NAME. Existing watches retain their source."
+  (check-type name keyword)
+  (when (eq name :default) (error "The backend name :DEFAULT is reserved."))
+  (check-type opener function)
+  (setf (gethash name *backends*) (cons opener (not (null native-p))))
+  name)
 
-(defun watch (paths callback &key (interval 1.0) events recursive)
-  "Watch PATHS. EVENTS passes a batch to CALLBACK; RECURSIVE covers subtrees.
-Return a release function, or nil if the watch cannot be established."
+(defun backend (&optional (name :default))
+  "Resolve NAME, or the automatically selected backend."
+  (let ((name (if (eq name :default) *default-backend* name)))
+    (unless (gethash name *backends*) (error "Unknown backend: ~s" name))
+    name))
+
+(defun native-p (&optional (name :default))
+  "Whether NAME waits on backend events rather than the library scan timer."
+  (cdr (gethash (backend name) *backends*)))
+
+(defun watch (paths callback &key (interval 1.0) events recursive (backend :default))
+  "Watch PATHS using BACKEND. Return a release function, or nil on setup failure."
   (check-type interval (real (0) *))
-  (ecase (backend)
-    #+darwin (:kqueue (%kqueue-watch paths callback :events events :recursive recursive))
-    #+linux (:inotify (%inotify-watch paths callback :events events :recursive recursive))
-    #+(or windows win32 mswindows)
-    (:read-directory-changes
-     (%windows-watch paths callback :events events :recursive recursive))
-    (:scan (%scan-watch paths callback interval :events events :recursive recursive))))
+  (let ((opener (car (gethash (backend backend) *backends*))))
+    (start-watch paths callback recursive events
+                 (lambda (paths state)
+                   (funcall opener paths state :interval interval :recursive recursive)))))

@@ -1,13 +1,14 @@
 (in-package #:trivial-watch)
 
-#+darwin
+#+(or darwin freebsd netbsd openbsd)
 (progn
-  (defconstant +o-evtonly+ #x8000)
+  (defconstant +watch-open-flags+ #+darwin #x8000 #-darwin 0)
   (cffi:defcfun ("open" %open) :int (path :string) (flags :int))
   (cffi:defcfun ("close" %close) :int (descriptor :int))
 
-  (defun open-kqueue-source (paths state)
-    (let ((queue (kq:open-queue))
+  (defun open-kqueue-source (paths state &key interval recursive)
+    (declare (ignore interval recursive))
+    (let ((queue (trivial-watch.kqueue:open-queue))
           (descriptors (make-path-table))
           (identities (make-hash-table)))
       (unless queue (return-from open-kqueue-source nil))
@@ -24,23 +25,23 @@
                      (unless (gethash path wanted-set) (remove-target path)))
                    (dolist (path wanted)
                      (unless (gethash path descriptors)
-                       (let ((descriptor (%open path +o-evtonly+)))
+                       (let ((descriptor (%open path +watch-open-flags+)))
                          (unless (minusp descriptor)
                            (setf (gethash path descriptors) descriptor
                                  (gethash descriptor identities) path)
-                           (unless (kq:change queue descriptor kq:+filter-vnode+
-                                             (logior kq:+flag-add+ kq:+flag-clear+)
-                                             kq:+note-vnode+)
+                           (unless (trivial-watch.kqueue:change queue descriptor trivial-watch.kqueue:+filter-vnode+
+                                             (logior trivial-watch.kqueue:+flag-add+ trivial-watch.kqueue:+flag-clear+)
+                                             trivial-watch.kqueue:+note-vnode+)
                              (error "Cannot register kqueue target: ~a" path)))
                          (when (and (minusp descriptor) (existing-path path))
                            (error "Cannot open kqueue target: ~a" path)))))))
                (wait ()
-                 (let ((events (kq:wait queue 64 nil)))
+                 (let ((events (trivial-watch.kqueue:wait queue 64 nil)))
                    (dolist (event events)
                      (destructuring-bind (descriptor filter flags notes) event
                        (declare (ignore flags))
                        ;; A renamed/deleted vnode cannot follow its replacement.
-                       (when (and (= filter kq:+filter-vnode+) (logtest #x61 notes))
+                       (when (and (= filter trivial-watch.kqueue:+filter-vnode+) (logtest #x61 notes))
                          (let ((path (gethash descriptor identities)))
                            (when path (remove-target path))))))
                    events))
@@ -48,15 +49,15 @@
                  (maphash (lambda (path descriptor)
                             (declare (ignore path)) (%close descriptor))
                           descriptors)
-                 (kq:close-queue queue)))
+                 (trivial-watch.kqueue:close-queue queue)))
         (handler-case
             (progn
-              (unless (kq:change queue 0 kq:+filter-user+ kq:+flag-add+ 0)
+              (unless (trivial-watch.kqueue:change queue 0 trivial-watch.kqueue:+filter-user+ trivial-watch.kqueue:+flag-add+ 0)
                 (error "Cannot register kqueue shutdown event"))
               (refresh state)
               (make-source :wait #'wait :refresh #'refresh
-                           :wake (lambda () (kq:wake queue)) :close #'cleanup))
+                           :wake (lambda () (trivial-watch.kqueue:wake queue)) :close #'cleanup))
           (error (condition) (cleanup) (error condition))))))
 
-  (defun %kqueue-watch (paths callback &key recursive events)
-    (start-watch paths callback recursive events #'open-kqueue-source)))
+  (register-backend :kqueue #'open-kqueue-source)
+  (setf *default-backend* :kqueue))

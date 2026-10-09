@@ -17,7 +17,8 @@ It returns a release function, or nil when setup fails.
 |---|---|---|
 | `:events` | nil | Pass a list of events to the callback when true. |
 | `:recursive` | nil | Include descendants of requested directories when true. |
-| `:interval` | 1.0 | Positive scan interval in seconds; native backends ignore it. |
+| `:interval` | 1.0 | Positive scan interval in seconds; built-in event backends ignore it. |
+| `:backend` | `:default` | Automatic platform selection, or an explicitly registered backend such as `:scan`. |
 
 A directory covers its immediate files and directory entries. Recursive watches
 include existing and newly created subtrees, excluding directory symlinks.

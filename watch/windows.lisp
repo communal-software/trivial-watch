@@ -29,7 +29,8 @@
   (defun invalid-handle ()
     (cffi:make-pointer (1- (ash 1 (* 8 (cffi:foreign-type-size :pointer))))))
 
-  (defun open-windows-source (paths state)
+  (defun open-windows-source (paths state &key interval recursive)
+    (declare (ignore interval recursive))
     (let ((port (%completion-port (invalid-handle) (cffi:null-pointer) 0 1))
           (requests (make-path-table))
           (pending (make-hash-table)))
@@ -132,5 +133,5 @@
                            :close #'cleanup))
           (error (condition) (cleanup) (error condition))))))
 
-  (defun %windows-watch (paths callback &key recursive events)
-    (start-watch paths callback recursive events #'open-windows-source)))
+  (register-backend :read-directory-changes #'open-windows-source)
+  (setf *default-backend* :read-directory-changes))
