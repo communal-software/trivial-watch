@@ -87,7 +87,7 @@ jobs:
             "$RUNNER_TEMP/kqueue-abi" > "$KQUEUE_ABI_FILE"
           fi
           ros -Q run --load tests/run.lisp
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         if: matrix.implementation == 'abcl'
         with:
           distribution: temurin
@@ -148,4 +148,7 @@ jobs:
         shell: cpa.sh {0}
         run: |
           sh tests/setup-bsd.sh
+          if [ -f "$HOME/.trivial-watch-lisp-path" ]; then
+            export PATH="$(cat "$HOME/.trivial-watch-lisp-path"):$PATH"
+          fi
           WATCH_EXPECT_BACKEND=kqueue tests/test.sh ${{ matrix.lisp }}

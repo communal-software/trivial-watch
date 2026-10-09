@@ -89,18 +89,18 @@
                  ((uiop:directory-exists-p path)
                   (record path :directory)
                   (dolist (file
-                           #+ecl (remove-if #'uiop:directory-pathname-p
+                           #+(or ecl sbcl abcl) (remove-if #'uiop:directory-pathname-p
                                             (ignore-errors
                                               (directory (merge-pathnames uiop:*wild-file-for-directory* path)
                                                          :resolve-symlinks nil)))
-                           #-ecl (uiop:directory-files path))
+                           #-(or ecl sbcl abcl) (uiop:directory-files path))
                     (record file (stamp file)))
-                  ;; ECL's UIOP enumeration resolves directory symlinks.
+                  ;; Preserve symlink names so REAL-DIRECTORY-P can exclude them.
                   (dolist (directory
-                           #+ecl (ignore-errors
+                           #+(or ecl sbcl abcl) (ignore-errors
                                    (directory (merge-pathnames uiop:*wild-directory* path)
                                               :resolve-symlinks nil))
-                           #-ecl (uiop:subdirectories path))
+                           #-(or ecl sbcl abcl) (uiop:subdirectories path))
                     (when (real-directory-p directory)
                       (if recursive
                           (visit directory)

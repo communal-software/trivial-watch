@@ -15,7 +15,7 @@ int main(void) {
     FIELD(kevent, fflags);
     FIELD(kevent, data);
     FIELD(kevent, udata);
-#ifdef __FreeBSD__
+#if defined(__FreeBSD__) || defined(__NetBSD__)
     FIELD(kevent, ext);
 #endif
     printf("(:timespec-size . %zu)\n", sizeof(struct timespec));

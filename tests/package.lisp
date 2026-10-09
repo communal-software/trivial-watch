@@ -1,6 +1,5 @@
 (defpackage #:trivial-watch/tests
-  (:use #:cl #:fiveam)
-  (:local-nicknames (#:watch #:trivial-watch)))
+  (:use #:cl #:fiveam))
 
 (in-package #:trivial-watch/tests)
 

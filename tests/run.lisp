@@ -24,6 +24,10 @@
         (format t "Backend: ~s~%" backend)
         (when (and expected (not (string-equal expected (symbol-name backend))))
           (error "Expected backend ~a, got ~s" expected backend)))
+      (when (uiop:getenv "KQUEUE_ABI_FILE")
+        (unless (uiop:symbol-call :fiveam :run!
+                                 (find-symbol "KQUEUE-BINDINGS-MATCH-SYSTEM-HEADERS" :trivial-watch/tests))
+          (error "kqueue ABI verification failed")))
       (asdf:test-system :trivial-watch)
       (uiop:quit 0))
   (error (condition)

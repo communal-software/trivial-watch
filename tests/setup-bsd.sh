@@ -7,6 +7,10 @@ case "$(uname -s)" in
         ;;
     NetBSD)
         sudo pkgin -y install ecl curl
+        if ! ecl --norc --eval '(assert (member :threads *features*))' --eval '(quit)'; then
+            sh tests/build-ecl.sh "$HOME/threaded-ecl"
+            export PATH="$HOME/threaded-ecl/bin:$PATH"
+        fi
         lisp=ecl
         ;;
     OpenBSD)
@@ -20,3 +24,6 @@ case "$lisp" in
     sbcl) sbcl --non-interactive --load tests/install-quicklisp.lisp ;;
     ecl) ecl --norc --load tests/install-quicklisp.lisp ;;
 esac
+if [ "$(uname -s)" = NetBSD ] && [ -x "$HOME/threaded-ecl/bin/ecl" ]; then
+    printf '%s\n' "$HOME/threaded-ecl/bin" > "$HOME/.trivial-watch-lisp-path"
+fi

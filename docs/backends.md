@@ -6,7 +6,7 @@ registered backend explicitly. `(backend)` returns the default keyword;
 
 | Platform | Backend | Keyword |
 |---|---|---|
-| macOS, FreeBSD, NetBSD, OpenBSD | kqueue | `:kqueue` |
+| macOS, FreeBSD, NetBSD 11+, OpenBSD | kqueue | `:kqueue` |
 | Linux | inotify | `:inotify` |
 | Windows | ReadDirectoryChangesW | `:read-directory-changes` |
 | ABCL on Linux, macOS, Windows | JVM WatchService | `:watch-service` |
@@ -40,6 +40,7 @@ the timer wait.
 ## Limitations
 
 - BSD verification covers x86-64 guests. Other architectures remain unverified.
+- NetBSD before 11 uses scanning; its older versioned kevent ABI is unverified.
 - JVM notification latency and filesystem coverage depend on the Java provider.[^jvm]
 - Content snapshots have [event precision limits](watch.md#limitations).
 

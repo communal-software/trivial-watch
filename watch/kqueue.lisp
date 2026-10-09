@@ -59,5 +59,6 @@
                            :wake (lambda () (trivial-watch.kqueue:wake queue)) :close #'cleanup))
           (error (condition) (cleanup) (error condition))))))
 
-  (register-backend :kqueue #'open-kqueue-source)
-  (setf *default-backend* :kqueue))
+  (when (trivial-watch.kqueue:supported-p)
+    (register-backend :kqueue #'open-kqueue-source)
+    (setf *default-backend* :kqueue)))

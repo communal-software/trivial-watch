@@ -26,7 +26,8 @@ gh workflow run ci.yml -f lisp=ecl -f os=macos
 | Linux, macOS, Windows | Existing SBCL/ECL/CCL pairs | Roswell |
 | Linux, macOS, Windows | ABCL 1.9.2 | Downloaded JAR, Temurin Java 17 |
 | FreeBSD 15.1 | SBCL | BSD VM, packages |
-| NetBSD 11.0, OpenBSD 7.9 | ECL | BSD VM, packages |
+| NetBSD 11.0 | ECL 26.5.5 | BSD VM, threaded source build |
+| OpenBSD 7.9 | ECL | BSD VM, packages |
 | Ubuntu 24.04 | Threaded CLISP | Pinned source build; manual verification |
 
 BSD jobs use the pinned `cross-platform-actions` v1.6.0 release on Ubuntu hosts.

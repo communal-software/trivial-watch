@@ -24,11 +24,11 @@
   "Whether CHANGE, run against a watch on WATCH-PATHS, reaches the callback."
   (let* ((seen (bt2:make-semaphore))
          (release (ecase backend
-                    (:default (watch:watch watch-paths
+                    (:default (trivial-watch:watch watch-paths
                                             (lambda ()
                                               (bt2:signal-semaphore seen))
                                             :interval interval))
-                    (:scan (watch::%scan-watch
+                    (:scan (trivial-watch::%scan-watch
                             watch-paths
                             (lambda () (bt2:signal-semaphore seen))
                             interval)))))
@@ -39,8 +39,8 @@
       (funcall release))))
 
 (test a-backend-is-named
-  (is (member (watch:backend) '(:kqueue :inotify :read-directory-changes :watch-service :scan)))
-  (is (eq (watch:native-p) (not (eq (watch:backend) :scan)))))
+  (is (member (trivial-watch:backend) '(:kqueue :inotify :read-directory-changes :watch-service :scan)))
+  (is (eq (trivial-watch:native-p) (not (eq (trivial-watch:backend) :scan)))))
 
 (test a-watched-file-reports-its-change
   (with-directory
@@ -75,7 +75,7 @@
   (with-directory
     (let* ((path (write-file "released.txt" "one"))
            (count 0)
-           (release (watch:watch (list path)
+           (release (trivial-watch:watch (list path)
                                   (lambda () (incf count))
                                   :interval 0.1)))
       (is-true release)
@@ -85,7 +85,7 @@
       (is (zerop count)))))
 
 (test the-targets-of-a-path-include-its-directory
-  (let ((targets (watch::targets (list #p"/tmp/trivial-watch/a.lisp"))))
+  (let ((targets (trivial-watch::targets (list #p"/tmp/trivial-watch/a.lisp"))))
     (is (member "/tmp/trivial-watch/a.lisp" targets :test #'string=))
     (is (member "/tmp/trivial-watch/" targets :test #'string=))))
 
@@ -98,9 +98,9 @@
                         (bt2:with-lock-held (lock) (push batch batches))
                         (bt2:signal-semaphore seen)))
             (release (if (eq mode :scan)
-                         (watch::%scan-watch ,paths callback 0.05
+                         (trivial-watch::%scan-watch ,paths callback 0.05
                                              :events t :recursive ,recursive)
-                         (watch:watch ,paths callback :interval 0.05
+                         (trivial-watch:watch ,paths callback :interval 0.05
                                        :events t :recursive ,recursive))))
        (is-true release)
        (unwind-protect
@@ -111,8 +111,8 @@
                                       (let ((found (loop for batch in batches
                                                          thereis (find-if
                                                                   (lambda (event)
-                                                                    (and (watch::path= (namestring (watch:event-path event)) (namestring path))
-                                                                         (eq (watch:event-kind event) kind)))
+                                                                    (and (trivial-watch::path= (namestring (trivial-watch:event-path event)) (namestring path))
+                                                                         (eq (trivial-watch:event-kind event) kind)))
                                                                   batch))))
                                         (when found
                                           (setf batches (mapcar (lambda (batch) (remove found batch)) batches))
@@ -182,11 +182,11 @@
 (test overlapping-paths-produce-one-event-per-path
   (with-directory
     (let* ((path (write-file "overlap.txt" "one"))
-           (before (watch::snapshot (list path *directory*))))
+           (before (trivial-watch::snapshot (list path *directory*))))
       (write-file "overlap.txt" "two")
-      (let ((batch (watch::snapshot-events before (watch::snapshot (list path *directory*)))))
+      (let ((batch (trivial-watch::snapshot-events before (trivial-watch::snapshot (list path *directory*)))))
         (is (= 1 (length batch)))
-        (is (eq :modified (watch:event-kind (first batch))))))))
+        (is (eq :modified (trivial-watch:event-kind (first batch))))))))
 
 (test unicode-paths-are-watched
   (with-directory
@@ -199,8 +199,8 @@
   (with-directory
     (dolist (mode '(:native :scan))
       (let ((release (if (eq mode :scan)
-                         (watch::%scan-watch (list *directory*) (lambda ()) 60)
-                         (watch:watch (list *directory*) (lambda ()))))
+                         (trivial-watch::%scan-watch (list *directory*) (lambda ()) 60)
+                         (trivial-watch:watch (list *directory*) (lambda ()))))
             (start (get-internal-real-time)))
         (is-true release)
         (funcall release)
@@ -214,8 +214,8 @@
              (release nil)
              (callback (lambda () (funcall release) (bt2:signal-semaphore done))))
         (setf release (if (eq mode :scan)
-                          (watch::%scan-watch (list *directory*) callback 0.05)
-                          (watch:watch (list *directory*) callback)))
+                          (trivial-watch::%scan-watch (list *directory*) callback 0.05)
+                          (trivial-watch:watch (list *directory*) callback)))
         (is-true release)
         (unwind-protect
              (progn
@@ -225,14 +225,14 @@
 
 (test failed-setup-returns-nil
   (with-directory
-    (is-false (watch:watch (list (merge-pathnames "missing.txt" *directory*)) (lambda ())))
-    (is-false (watch:watch nil (lambda ())))
-    (is-false (watch:watch (list *directory* (merge-pathnames "missing.txt" *directory*))
+    (is-false (trivial-watch:watch (list (merge-pathnames "missing.txt" *directory*)) (lambda ())))
+    (is-false (trivial-watch:watch nil (lambda ())))
+    (is-false (trivial-watch:watch (list *directory* (merge-pathnames "missing.txt" *directory*))
                             (lambda ())))))
 
 (test snapshot-renames-are-delete-and-create
-  (let ((batch (watch::snapshot-events '(("/old" . (1 . 2))) '(("/new" . (1 . 2))))))
-    (is (equal '(:created :deleted) (mapcar #'watch:event-kind batch)))))
+  (let ((batch (trivial-watch::snapshot-events '(("/old" . (1 . 2))) '(("/new" . (1 . 2))))))
+    (is (equal '(:created :deleted) (mapcar #'trivial-watch:event-kind batch)))))
 
 #+unix
 (test recursive-watches-skip-directory-symlinks
@@ -251,11 +251,11 @@
   (with-directory
     (let ((closed nil))
       (is-false
-       (watch::start-watch
+       (trivial-watch::start-watch
         (list *directory*) (lambda ()) nil nil
         (lambda (paths state)
           (declare (ignore paths state))
-          (watch::make-source
+          (trivial-watch::make-source
            :refresh (lambda (state) (declare (ignore state)) (error "Injected registration failure"))
            :close (lambda () (setf closed t))))))
       (is-true closed))))
@@ -271,12 +271,12 @@
            (first t)
            (refreshes 0)
            (release
-             (watch::start-watch
+             (trivial-watch::start-watch
               (list directory) (lambda (events) (setf batch events) (bt2:signal-semaphore seen))
               t t
               (lambda (paths state)
                 (declare (ignore paths state))
-                (watch::make-source
+                (trivial-watch::make-source
                  :wait (lambda ()
                          (if first
                              (progn
@@ -295,7 +295,7 @@
            (progn
              (is-true (bt2:wait-on-semaphore seen :timeout 5))
              (is (> refreshes 1))
-             (is (equal '(:created :modified) (mapcar #'watch:event-kind batch))))
+             (is (equal '(:created :modified) (mapcar #'trivial-watch:event-kind batch))))
         (when release (funcall release))))))
 
 (test external-release-waits-for-an-active-callback
@@ -303,7 +303,7 @@
     (let* ((entered (bt2:make-semaphore))
            (resume (bt2:make-semaphore))
            (released (bt2:make-semaphore))
-           (release (watch:watch (list *directory*)
+           (release (trivial-watch:watch (list *directory*)
                                   (lambda ()
                                     (bt2:signal-semaphore entered)
                                     (bt2:wait-on-semaphore resume))))
@@ -328,15 +328,15 @@
     (cffi:with-foreign-object (buffer :uint8 32)
       (loop for offset in '(0 16)
             for mask in '(#x4000 #x8000)
-            do (cffi:with-foreign-slots ((watch::watch watch::mask watch::cookie watch::length)
-                                         (cffi:inc-pointer buffer offset) (:struct watch::inotify-event))
-                 (setf watch::watch 42 watch::mask mask watch::cookie 0 watch::length 0)))
-      (is-true (watch::decode-inotify-events buffer 32
+            do (cffi:with-foreign-slots ((trivial-watch::watch trivial-watch::mask trivial-watch::cookie trivial-watch::length)
+                                         (cffi:inc-pointer buffer offset) (:struct trivial-watch::inotify-event))
+                 (setf trivial-watch::watch 42 trivial-watch::mask mask trivial-watch::cookie 0 trivial-watch::length 0)))
+      (is-true (trivial-watch::decode-inotify-events buffer 32
                                             (lambda (watch) (setf ignored watch))
                                             (lambda () (setf reset t))))
       (is-true reset)
       (is (= 42 ignored))
-      (signals error (watch::decode-inotify-events buffer 1 #'identity (lambda ()))))))
+      (signals error (trivial-watch::decode-inotify-events buffer 1 #'identity (lambda ()))))))
 
 (test a-requested-directory-can-be-deleted-and-recreated
   (with-directory
@@ -354,7 +354,7 @@
 (test snapshot-input-does-not-create-missing-files
   (with-directory
     (let ((missing (merge-pathnames "missing.txt" *directory*)))
-      (is-false (loop repeat 100 thereis (watch::stamp missing)))
+      (is-false (loop repeat 100 thereis (trivial-watch::stamp missing)))
       (is-false (probe-file missing))
       (is-false (uiop:directory-files *directory*)))))
 
@@ -365,13 +365,13 @@
            (reader (bt2:make-thread
                     (lambda ()
                       (loop until (bt2:wait-on-semaphore stop :timeout 0)
-                            do (watch::stamp file))))))
+                            do (trivial-watch::stamp file))))))
       (unwind-protect
            (dotimes (index 100)
              (write-file "résumé.txt" (format nil "value ~d" index)))
         (bt2:signal-semaphore stop)
         (bt2:join-thread reader))
       (is (= 1 (length (uiop:directory-files *directory*))))
-      (is (equal (watch::stamp file) (watch::stamp file)))
+      (is (equal (trivial-watch::stamp file) (trivial-watch::stamp file)))
       (delete-file file)
       (is-false (uiop:directory-files *directory*)))))

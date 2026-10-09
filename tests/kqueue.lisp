@@ -14,7 +14,7 @@
                            trivial-watch.kqueue::data trivial-watch.kqueue::udata))
               (check (intern (format nil "KEVENT-~a" slot) :keyword)
                      (cffi:foreign-slot-offset '(:struct trivial-watch.kqueue::kevent) slot)))
-            #+freebsd
+            #+(or freebsd netbsd)
             (check :kevent-ext (cffi:foreign-slot-offset '(:struct trivial-watch.kqueue::kevent)
                                                         'trivial-watch.kqueue::extensions))
             (check :timespec-size (cffi:foreign-type-size '(:struct trivial-watch.kqueue::timespec)))

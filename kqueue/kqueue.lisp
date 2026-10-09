@@ -1,13 +1,14 @@
 (in-package #:trivial-watch.kqueue)
 
 (defun supported-p ()
-  #+(or darwin freebsd netbsd openbsd) t
+  #+netbsd (not (null (cffi:foreign-symbol-pointer "__kevent100" :errorp nil)))
+  #+(or darwin freebsd openbsd) t
   #-(or darwin freebsd netbsd openbsd) nil)
 
 #+(or darwin freebsd netbsd openbsd)
 (progn
   (defconstant +filter-vnode+ #+netbsd 3 #-netbsd -4)
-  (defconstant +filter-user+ #+netbsd 8 #-netbsd -10)
+  (defconstant +filter-user+ #+netbsd 8 #+freebsd -11 #-(or netbsd freebsd) -10)
 
   (defconstant +flag-add+ #x0001)
   (defconstant +flag-enable+ #x0004)
@@ -24,7 +25,7 @@
     (fflags :uint32)
     (data #+darwin :intptr #-darwin :int64)
     (udata :pointer)
-    #+freebsd (extensions :uint64 :count 4))
+    #+(or freebsd netbsd) (extensions :uint64 :count 4))
 
   (cffi:defcstruct timespec
     (seconds :long)
@@ -32,7 +33,7 @@
 
   (cffi:defcfun ("kqueue" %kqueue) :int)
 
-  (cffi:defcfun ("kevent" %kevent) :int
+  (cffi:defcfun (#+netbsd "__kevent100" #-netbsd "kevent" %kevent) :int
     (queue :int) (changes :pointer) (change-count #+netbsd :size #-netbsd :int)
     (events :pointer) (event-count #+netbsd :size #-netbsd :int) (timeout :pointer))
 
@@ -51,7 +52,7 @@
                               event (:struct kevent))
       (setf ident identity filter interest flags action fflags notes
             data 0 udata (cffi:null-pointer)))
-    #+freebsd
+    #+(or freebsd netbsd)
     (let ((extensions (cffi:foreign-slot-pointer event '(:struct kevent) 'extensions)))
       (dotimes (index 4) (setf (cffi:mem-aref extensions :uint64 index) 0)))
     event)
