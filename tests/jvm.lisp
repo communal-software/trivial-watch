@@ -1,5 +1,7 @@
 (in-package #:trivial-watch/tests)
 
+(in-suite :trivial-watch)
+
 (test snapshot-input-allows-replacement-while-open
   (with-directory
     (let ((file (write-file "replace.txt" "one")))
@@ -7,8 +9,6 @@
         (write-file "replace.txt" "two")
         (is (= (char-code #\o) (read-byte stream))))
       (is-true (trivial-watch::stamp file)))))
-
-(in-suite :trivial-watch)
 
 (test abcl-loads-without-cffi
   (is-false (find-package :cffi))
