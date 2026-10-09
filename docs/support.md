@@ -19,7 +19,7 @@ CI coverage describes actual automated tests, not assumed compatibility.
 | LispWorks | Untested | Untested | Untested |
 | Allegro | Untested | Untested | Untested |
 
-The [verification workflow](https://github.com/takeiteasy/trivial-watch/actions/runs/37925890098)
+The [verification workflow](https://github.com/takeiteasy/trivial-watch/actions/runs/37927836206)
 checks both native watching and scanning. Platform-specific cases account for differences in check counts.
 The runner prints versions, dependencies, architecture, and selected backend.
 
@@ -74,5 +74,5 @@ sbcl --non-interactive --load tests/core.lisp
 [^clisp]: CI builds pinned upstream CLISP with POSIX threads and FFI. Snapshot
     reads use CLISP's built-in FFI without changing duplicate-open settings.
     The CFFI-free core check runs in a fresh process.
-    [CLISP verification](https://github.com/takeiteasy/trivial-watch/actions/runs/37925938482)
+    [CLISP verification](https://github.com/takeiteasy/trivial-watch/actions/runs/37928214176)
     covers native and scan behavior.
