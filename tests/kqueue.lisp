@@ -78,3 +78,32 @@
                        (is (= 2 attempts)))))
             (setf (symbol-function 'trivial-watch::%open) opener)
             (when source (funcall (trivial-watch::source-close source)))))))))
+
+(test kqueue-refresh-preserves-pending-notifications
+  (with-directory
+    (let* ((file (write-file "replace.txt" "one"))
+           (paths (list file))
+           (source (trivial-watch::open-kqueue-source paths (trivial-watch::snapshot paths))))
+      (is-true source)
+      (unwind-protect
+           (flet ((wait-for-source ()
+                    (let* ((finished (bt2:make-semaphore))
+                           (result nil)
+                           (completed nil)
+                           (thread (bt2:make-thread
+                                    (lambda ()
+                                      (setf result (ignore-errors
+                                                     (funcall (trivial-watch::source-wait source))))
+                                      (bt2:signal-semaphore finished)))))
+                      (unwind-protect
+                           (progn
+                             (setf completed (bt2:wait-on-semaphore finished :timeout 5))
+                             (and completed result))
+                        (unless completed (funcall (trivial-watch::source-wake source)))
+                        (bt2:join-thread thread)))))
+             (uiop:rename-file-overwriting-target (write-file "temporary.txt" "two") file)
+             (funcall (trivial-watch::source-refresh source) (trivial-watch::snapshot paths))
+             (is-true (wait-for-source))
+             (write-file "replace.txt" "three")
+             (is-true (wait-for-source)))
+        (when source (funcall (trivial-watch::source-close source)))))))

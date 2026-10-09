@@ -115,6 +115,7 @@ jobs:
           export PATH="$HOME/threaded-clisp/bin:$PATH"
           curl -fsSL --retry 5 https://beta.quicklisp.org/quicklisp.lisp -o "$HOME/quicklisp.lisp"
           clisp -q -norc tests/install-quicklisp.lisp
+          clisp -q -norc tests/core.lisp
           tests/test.sh clisp
       - name: Diagnose distro CLISP
         if: matrix.implementation == 'clisp-distro'

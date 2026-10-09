@@ -32,3 +32,39 @@
   (signals error (trivial-watch:watch nil #'identity :backend :unknown-backend))
   (signals error (trivial-watch:register-backend :default #'identity)))
 
+
+(test callbacks-follow-the-final-source-refresh
+  (with-directory
+    (let* ((file (write-file "final.txt" "one"))
+           (notify (bt2:make-semaphore))
+           (seen (bt2:make-semaphore))
+           (change-during-refresh nil)
+           (refreshed nil)
+           (matched nil)
+           (release
+             (trivial-watch::start-watch
+              (list file)
+              (lambda ()
+                (setf matched (equal refreshed (trivial-watch::snapshot (list file))))
+                (bt2:signal-semaphore seen))
+              nil nil
+              (lambda (paths state)
+                (declare (ignore paths state))
+                (trivial-watch:make-source
+                 :wait (lambda () (bt2:wait-on-semaphore notify) t)
+                 :refresh (lambda (state)
+                            (setf refreshed state)
+                            (when change-during-refresh
+                              (setf change-during-refresh nil)
+                              (write-file "final.txt" "three")))
+                 :wake (lambda () (bt2:signal-semaphore notify))
+                 :close (lambda ()))))))
+      (is-true release)
+      (unwind-protect
+           (progn
+             (write-file "final.txt" "two")
+             (setf change-during-refresh t)
+             (bt2:signal-semaphore notify)
+             (is-true (bt2:wait-on-semaphore seen :timeout 5))
+             (is-true matched))
+        (when release (funcall release))))))

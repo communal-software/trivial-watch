@@ -26,7 +26,8 @@
                                         (snapshot paths recursive))
                      when (or (not (active-p))
                               (equal (mapcar #'car before) (mapcar #'car after)))
-                       return after))
+                       do (funcall (source-refresh source) after)
+                       and return after))
              (run (paths state)
                (unwind-protect
                     (handler-case

@@ -41,6 +41,7 @@ new snapshot.
 | `:close` | None | Release all source resources. |
 
 Only the worker invokes wait and refresh. Wake may run concurrently with either.
+Refresh can run more than once per notification; its final state precedes callbacks.
 Close follows worker termination or setup rollback. Openers clean up their own
 partial resources if they fail before returning a source. A failed source returns
 nil from `watch`; it does not cause fallback to scanning.

@@ -45,8 +45,6 @@ the timer wait.
 - JVM notification latency and filesystem coverage depend on the Java provider.[^jvm]
 - Permanent kqueue wait errors are treated as empty batches; error propagation
   is tracked in [ticket 13](https://todo.sr.ht/~takeiteasy/trivial-watch/13).
-- kqueue replacement callbacks can precede registration of the replacement vnode;
-  the callback gap is tracked in [ticket 15](https://todo.sr.ht/~takeiteasy/trivial-watch/15).
 - Content snapshots have [event precision limits](watch.md#limitations).
 
 [^native]: kqueue tracks vnode replacement and reopens affected descriptors.

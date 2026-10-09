@@ -70,23 +70,54 @@
         (ccl::fd-close descriptor)
         (error condition)))))
 
+#+(and clisp unix)
+(progn
+  (ffi:def-call-out %snapshot-open
+    (:name "open") (:library :default) (:language :stdc)
+    (:arguments (path ffi:c-string) (flags ffi:int)) (:return-type ffi:int))
+  (ffi:def-call-out %snapshot-read
+    (:name "read") (:library :default) (:language :stdc)
+    (:arguments (descriptor ffi:int) (buffer ffi:c-pointer) (count ffi:ulong))
+    (:return-type ffi:long))
+  (ffi:def-call-out %snapshot-close
+    (:name "close") (:library :default) (:language :stdc)
+    (:arguments (descriptor ffi:int)) (:return-type ffi:int)))
+
+(defun stamp-blocks (read-block)
+  (let ((size 0) (hash 14695981039346656037))
+    (declare (type (unsigned-byte 64) hash))
+    (loop
+      (multiple-value-bind (buffer count) (funcall read-block)
+        (when (zerop count) (return (cons size hash)))
+        (incf size count)
+        ;; FNV-1a: SXHASH does not hash byte-vector contents portably.
+        (dotimes (index count)
+          (setf hash (ldb (byte 64 0)
+                          (* (logxor hash (aref buffer index)) 1099511628211))))))))
+
 (defun stamp (file)
   (ignore-errors
+    #+(and clisp unix)
+    ;; Lisp file streams participate in CLISP's duplicate-open checks.
+    (let ((descriptor (%snapshot-open (namestring file) 0)))
+      (when (minusp descriptor) (return-from stamp nil))
+      (unwind-protect
+           (ffi:with-foreign-object (buffer '(ffi:c-array ffi:uint8 65536))
+             (let ((pointer (ffi:foreign-address buffer)))
+               (stamp-blocks
+                (lambda ()
+                  (let ((count (%snapshot-read descriptor pointer 65536)))
+                    (when (minusp count) (error "Snapshot read failed: ~a" file))
+                    (values (when (plusp count)
+                              (ffi:memory-as pointer
+                                             (ffi:parse-c-type `(ffi:c-array ffi:uint8 ,count))))
+                            count))))))
+        (%snapshot-close descriptor)))
+    #-(and clisp unix)
     (with-open-stream (stream (open-snapshot-input file))
       (unless stream (return-from stamp nil))
-      (let ((buffer (make-array 65536 :element-type '(unsigned-byte 8)))
-            (size 0)
-            (hash 14695981039346656037))
-        (declare (type (unsigned-byte 64) hash))
-        (loop for count = (read-sequence buffer stream)
-              while (plusp count)
-              do (incf size count)
-                 ;; FNV-1a: SXHASH does not hash byte-vector contents portably.
-                 (dotimes (index count)
-                   (setf hash (ldb (byte 64 0)
-                                   (* (logxor hash (aref buffer index))
-                                      1099511628211)))))
-        (cons size hash)))))
+      (let ((buffer (make-array 65536 :element-type '(unsigned-byte 8))))
+        (stamp-blocks (lambda () (values buffer (read-sequence buffer stream))))))))
 
 (defun real-directory-p (path)
   (let ((actual (ignore-errors (truename path))))

@@ -13,7 +13,8 @@
     (let ((queue (trivial-watch.kqueue:open-queue))
           (open-target (symbol-function '%open))
           (descriptors (make-path-table))
-          (identities (make-hash-table)))
+          (identities (make-hash-table))
+          (pending nil))
       (unless queue (return-from open-kqueue-source nil))
       (labels ((remove-target (path)
                  (let ((descriptor (gethash path descriptors)))
@@ -21,7 +22,21 @@
                      (%close descriptor)
                      (remhash path descriptors)
                      (remhash descriptor identities))))
+               (process-events (events)
+                 (dolist (event events)
+                   (destructuring-bind (descriptor filter flags notes) event
+                     (declare (ignore flags))
+                     ;; A renamed/deleted vnode cannot follow its replacement.
+                     (when (and (= filter trivial-watch.kqueue:+filter-vnode+) (logtest #x61 notes))
+                       (let ((path (gethash descriptor identities)))
+                         (when path (remove-target path))))))
+                 events)
                (refresh (state)
+                 ;; One slot per registration covers all pending knotes, including shutdown.
+                 (let ((events (trivial-watch.kqueue:wait queue (1+ (hash-table-count descriptors)) 0)))
+                   (when events
+                     (setf pending t)
+                     (process-events events)))
                  (let* ((wanted (registration-paths paths state))
                         (wanted-set (path-set wanted)))
                    (dolist (path (loop for path being the hash-keys of descriptors collect path))
@@ -41,15 +56,9 @@
                              (unless (member errno '(2 20))
                                (error "Cannot open kqueue target: ~a (errno ~d)" path errno)))))))))
                (wait ()
-                 (let ((events (trivial-watch.kqueue:wait queue 64 nil)))
-                   (dolist (event events)
-                     (destructuring-bind (descriptor filter flags notes) event
-                       (declare (ignore flags))
-                       ;; A renamed/deleted vnode cannot follow its replacement.
-                       (when (and (= filter trivial-watch.kqueue:+filter-vnode+) (logtest #x61 notes))
-                         (let ((path (gethash descriptor identities)))
-                           (when path (remove-target path))))))
-                   events))
+                 (if pending
+                     (progn (setf pending nil) t)
+                     (process-events (trivial-watch.kqueue:wait queue 64 nil))))
                (cleanup ()
                  (maphash (lambda (path descriptor)
                             (declare (ignore path)) (%close descriptor))

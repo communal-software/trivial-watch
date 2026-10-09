@@ -1,4 +1,7 @@
-(require :asdf)
+(handler-case (require :asdf)
+  (error ()
+    (load (or #+clisp (ext:getenv "QUICKLISP_SETUP")
+              (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname))))))
 (unless (find-package :ql)
   (load (or (uiop:getenv "QUICKLISP_SETUP")
             (merge-pathnames "quicklisp/setup.lisp" (user-homedir-pathname)))))
