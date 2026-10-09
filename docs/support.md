@@ -56,6 +56,7 @@ sbcl --non-interactive --load tests/core.lisp
 | Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads: [verification ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/10). |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | Native bindings and GitHub VM tests are configured; verification is pending in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-watch/3). |
+| NetBSD before 11 | Uses scanning; the older native ABI needs separate verification in [ticket 12](https://todo.sr.ht/~takeiteasy/trivial-watch/12). |
 | ABCL | WatchService passes locally; three-platform CI verification is pending in [ticket 8](https://todo.sr.ht/~takeiteasy/trivial-watch/8). |
 | JSCL | No filesystem or threading backend for this library. |
 

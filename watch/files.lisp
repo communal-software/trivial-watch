@@ -44,9 +44,21 @@
                                    (uiop:pathname-directory-pathname path))))))
 
 (defun open-snapshot-input (file)
-  #-ccl
+  #-(or ccl abcl)
   (open file :direction :input :element-type '(unsigned-byte 8)
              :if-does-not-exist nil)
+  #+abcl
+  ;; NIO input streams allow Windows to replace the file while it is open.
+  (let* ((path (java:jstatic "get" "java.nio.file.Paths" (namestring file)
+                            (java:jnew-array "java.lang.String" 0)))
+         (input (java:jstatic "newInputStream" "java.nio.file.Files" path
+                             (java:jnew-array "java.nio.file.OpenOption" 0))))
+    (handler-case
+        (java:jobject-lisp-value
+         (java:jnew "org.armedbear.lisp.Stream" 'stream input '(unsigned-byte 8)))
+      (error (condition)
+        (java:jcall "close" input)
+        (error condition))))
   #+ccl
   ;; CCL's pathname input stream can create files between its two probes.
   (let ((descriptor (ccl::fd-open (ccl::native-translated-namestring file) 0)))
@@ -97,9 +109,13 @@
                     (record file (stamp file)))
                   ;; Preserve symlink names so REAL-DIRECTORY-P can exclude them.
                   (dolist (directory
-                           #+(or ecl sbcl abcl) (ignore-errors
+                           #+(or ecl sbcl) (ignore-errors
                                    (directory (merge-pathnames uiop:*wild-directory* path)
                                               :resolve-symlinks nil))
+                           #+abcl (remove-if-not #'uiop:directory-pathname-p
+                                                (ignore-errors
+                                                  (directory (merge-pathnames uiop:*wild-file-for-directory* path)
+                                                             :resolve-symlinks nil)))
                            #-(or ecl sbcl abcl) (uiop:subdirectories path))
                     (when (real-directory-p directory)
                       (if recursive

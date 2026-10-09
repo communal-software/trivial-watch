@@ -40,8 +40,11 @@ the timer wait.
 ## Limitations
 
 - BSD verification covers x86-64 guests. Other architectures remain unverified.
-- NetBSD before 11 uses scanning; its older versioned kevent ABI is unverified.
+- NetBSD before 11 uses scanning; its older versioned ABI is tracked in
+  [the compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/12).
 - JVM notification latency and filesystem coverage depend on the Java provider.[^jvm]
+- Permanent kqueue wait errors are treated as empty batches; error propagation
+  is tracked in [ticket 13](https://todo.sr.ht/~takeiteasy/trivial-watch/13).
 - Content snapshots have [event precision limits](watch.md#limitations).
 
 [^native]: kqueue tracks vnode replacement and reopens affected descriptors.

@@ -8,5 +8,5 @@ tar -xzf "$build_dir/ecl.tgz" -C "$build_dir"
 cd "$build_dir/ecl-26.5.5"
 ./configure --prefix="$prefix" --enable-threads=yes --enable-boehm=system --enable-gmp=system \
             --with-libgc-prefix=/usr/pkg --with-gmp-prefix=/usr/pkg --with-libffi-prefix=/usr/pkg
-make -j2
-make install
+gmake -j2
+gmake install

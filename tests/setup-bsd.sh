@@ -6,7 +6,7 @@ case "$(uname -s)" in
         lisp=sbcl
         ;;
     NetBSD)
-        sudo pkgin -y install ecl curl
+        sudo pkgin -y install ecl curl gmake
         if ! ecl --norc --eval '(assert (member :threads *features*))' --eval '(quit)'; then
             sh tests/build-ecl.sh "$HOME/threaded-ecl"
             export PATH="$HOME/threaded-ecl/bin:$PATH"

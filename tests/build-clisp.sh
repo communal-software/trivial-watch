@@ -12,7 +12,7 @@ if [ ! -x "$prefix/bin/clisp" ]; then
     # Timed prompt tests need an open input stream rather than immediate EOF.
     mkfifo "$build_dir/check-input"
     exec 3<> "$build_dir/check-input"
-    make -C build check < "$build_dir/check-input"
+    make -C build check-tests < "$build_dir/check-input"
     exec 3>&-
     make -C build install
 fi
