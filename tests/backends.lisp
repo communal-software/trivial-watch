@@ -35,7 +35,8 @@
 
 (test callbacks-follow-the-final-source-refresh
   (with-directory
-    (let* ((file (write-file "final.txt" "one"))
+    (let* ((directory *directory*)
+           (file (write-file "final.txt" "one"))
            (notify (bt2:make-semaphore))
            (seen (bt2:make-semaphore))
            (change-during-refresh nil)
@@ -56,7 +57,8 @@
                             (setf refreshed state)
                             (when change-during-refresh
                               (setf change-during-refresh nil)
-                              (write-file "final.txt" "three")))
+                              (let ((*directory* directory))
+                                (write-file "final.txt" "three"))))
                  :wake (lambda () (bt2:signal-semaphore notify))
                  :close (lambda ()))))))
       (is-true release)
