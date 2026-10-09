@@ -20,7 +20,7 @@ on:
         default: all
 
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.ref }}-${{ inputs.lisp || 'all' }}-${{ inputs.os || 'all' }}
   cancel-in-progress: true
 
 jobs:
