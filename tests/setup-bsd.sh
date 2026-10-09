@@ -8,6 +8,7 @@ case "$(uname -s)" in
     NetBSD)
         sudo pkgin -y install ecl curl gmake
         if ! ecl --norc --eval '(assert (member :threads *features*))' --eval '(quit)'; then
+            sudo pkg_delete ecl
             sh tests/build-ecl.sh "$HOME/threaded-ecl"
             export PATH="$HOME/threaded-ecl/bin:$PATH"
         fi

@@ -49,3 +49,32 @@
            (is (= trivial-watch.kqueue:+filter-user+ (second (first result)))))
       (when thread (bt2:join-thread thread))
       (trivial-watch.kqueue:close-queue queue))))
+
+(test kqueue-registration-uses-the-open-error
+  (with-directory
+    (let* ((file (write-file "recreated.txt" "one"))
+           (paths (list file))
+           (state (trivial-watch::snapshot paths))
+           (opener (symbol-function 'trivial-watch::%open)))
+      (dolist (errno '(2 20 13))
+        (let ((attempts 0) (source nil))
+          (unwind-protect
+               (progn
+                 (setf (symbol-function 'trivial-watch::%open)
+                       (lambda (path flags)
+                         (if (and (trivial-watch::path= path (namestring file))
+                                  (= 1 (incf attempts)))
+                             (let ((location (trivial-watch::%kqueue-errno-location)))
+                               (setf (cffi:mem-ref location :int) errno)
+                               -1)
+                             (funcall opener path flags))))
+                 (if (= errno 13)
+                     (signals error (trivial-watch::open-kqueue-source paths state))
+                     (progn
+                       (setf source (trivial-watch::open-kqueue-source paths state))
+                       (is-true source)
+                       (is (= 1 attempts))
+                       (funcall (trivial-watch::source-refresh source) state)
+                       (is (= 2 attempts)))))
+            (setf (symbol-function 'trivial-watch::%open) opener)
+            (when source (funcall (trivial-watch::source-close source)))))))))

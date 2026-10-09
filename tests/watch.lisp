@@ -358,6 +358,13 @@
       (is-false (probe-file missing))
       (is-false (uiop:directory-files *directory*)))))
 
+(test existing-path-covers-directories-and-files
+  (with-directory
+    (let ((file (write-file "present.txt" "one")))
+      (is (equal *directory* (trivial-watch::existing-path *directory*)))
+      (is (equal (truename file) (trivial-watch::existing-path file)))
+      (is-false (trivial-watch::existing-path (merge-pathnames "missing/" *directory*))))))
+
 (test snapshot-reads-do-not-interfere-with-replacement
   (with-directory
     (let* ((file (write-file "résumé.txt" "one"))

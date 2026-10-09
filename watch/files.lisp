@@ -25,7 +25,7 @@
             collect path and do (setf (gethash name seen) t))))
 
 (defun existing-path (path)
-  (ignore-errors (probe-file path)))
+  (uiop:probe-file* path :truename t))
 
 (defun normalize-paths (paths)
   (unique-paths
@@ -116,7 +116,11 @@
                                                 (ignore-errors
                                                   (directory (merge-pathnames uiop:*wild-file-for-directory* path)
                                                              :resolve-symlinks nil)))
-                           #-(or ecl sbcl abcl) (uiop:subdirectories path))
+                           #+clisp (mapcar #'first
+                                           (ignore-errors
+                                             (directory (merge-pathnames uiop:*wild-directory* path)
+                                                        :full t :circle t :if-does-not-exist :ignore)))
+                           #-(or ecl sbcl abcl clisp) (uiop:subdirectories path))
                     (when (real-directory-p directory)
                       (if recursive
                           (visit directory)

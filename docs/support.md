@@ -14,11 +14,12 @@ CI coverage describes actual automated tests, not assumed compatibility.
 | SBCL | Verified, CI (x86_64) | Verified, CI (ARM64) | Verified, CI (x86_64) |
 | ECL | Verified, CI (x86_64) | Verified, CI (ARM64) | Untested |
 | CCL | Verified, CI (x86_64) | Verified, CI (Intel)[^ccl-arm] | Untested |
+| ABCL 1.9.2 | Verified, CI (x86_64) | Verified, CI (ARM64) | Verified, CI (x86_64) |
 | CLISP | Dependency failure, distro build | Untested | Untested |
 | LispWorks | Untested | Untested | Untested |
 | Allegro | Untested | Untested | Untested |
 
-The [verification workflow](https://github.com/takeiteasy/trivial-watch/actions/runs/37839692440)
+The [verification workflow](https://github.com/takeiteasy/trivial-watch/actions/runs/37922146494)
 checks both native watching and scanning. Platform-specific cases account for differences in check counts.
 The runner prints versions, dependencies, architecture, and selected backend.
 
@@ -57,7 +58,6 @@ sbcl --non-interactive --load tests/core.lisp
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | Native bindings and GitHub VM tests are configured; verification is pending in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-watch/3). |
 | NetBSD before 11 | Uses scanning; the older native ABI needs separate verification in [ticket 12](https://todo.sr.ht/~takeiteasy/trivial-watch/12). |
-| ABCL | WatchService passes locally; three-platform CI verification is pending in [ticket 8](https://todo.sr.ht/~takeiteasy/trivial-watch/8). |
 | JSCL | No filesystem or threading backend for this library. |
 
 [^ccl-arm]: Distributed CCL macOS CI uses Intel runners. ARM64 CCL is verified

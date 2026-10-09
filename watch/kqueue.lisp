@@ -5,6 +5,8 @@
   (defconstant +watch-open-flags+ #+darwin #x8000 #-darwin 0)
   (cffi:defcfun ("open" %open) :int (path :string) (flags :int))
   (cffi:defcfun ("close" %close) :int (descriptor :int))
+  (cffi:defcfun (#+(or darwin freebsd) "__error"
+                #+(or netbsd openbsd) "__errno" %kqueue-errno-location) :pointer)
 
   (defun open-kqueue-source (paths state &key interval recursive)
     (declare (ignore interval recursive))
@@ -33,8 +35,10 @@
                                              (logior trivial-watch.kqueue:+flag-add+ trivial-watch.kqueue:+flag-clear+)
                                              trivial-watch.kqueue:+note-vnode+)
                              (error "Cannot register kqueue target: ~a" path)))
-                         (when (and (minusp descriptor) (existing-path path))
-                           (error "Cannot open kqueue target: ~a" path)))))))
+                         (when (minusp descriptor)
+                           (let ((errno (cffi:mem-ref (%kqueue-errno-location) :int)))
+                             (unless (member errno '(2 20))
+                               (error "Cannot open kqueue target: ~a (errno ~d)" path errno)))))))))
                (wait ()
                  (let ((events (trivial-watch.kqueue:wait queue 64 nil)))
                    (dolist (event events)

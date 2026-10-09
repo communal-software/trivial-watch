@@ -19,6 +19,7 @@ WatchService on ABCL, and a content scan elsewhere.
 | SBCL | CI | CI, ARM64 | CI |
 | ECL | CI | CI, ARM64 | Untested |
 | CCL | CI | CI, Intel | Untested |
+| ABCL | CI | CI, ARM64 | CI |
 | CLISP | Distro build fails dependency check | Untested | Untested |
 | LispWorks, Allegro | Untested | Untested | Untested |
 
