@@ -2,7 +2,7 @@
   :description "Watch files and directories for changes."
   :author "George Watson"
   :license "MIT"
-  :version "0.1.1"
+  :version "0.1.2"
   :depends-on ("trivial-watch/core"
                #+abcl "trivial-watch/jvm"
                #-abcl "trivial-watch/native")
@@ -11,7 +11,7 @@
 (defsystem "trivial-watch/core"
   :description "Filesystem snapshots, workers, and backend extensions."
   :license "MIT"
-  :version "0.1.1"
+  :version "0.1.2"
   :depends-on ("uiop" "bordeaux-threads")
   :pathname "watch/"
   :serial t
@@ -36,7 +36,7 @@
   :description "The kqueue calls trivial-watch makes."
   :author "George Watson"
   :license "MIT"
-  :version "0.1.1"
+  :version "0.1.2"
   :depends-on ("cffi")
   :pathname "kqueue/"
   :serial t
