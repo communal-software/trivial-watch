@@ -5,3 +5,4 @@
 (load (merge-pathnames "quicklisp.lisp" (user-homedir-pathname)))
 (quicklisp-quickstart:install)
 (ql:quickload '("bordeaux-threads" #-abcl "cffi"))
+(uiop:quit 0)

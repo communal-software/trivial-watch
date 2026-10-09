@@ -55,6 +55,7 @@ sbcl --non-interactive --load tests/core.lisp
 |---|---|
 | LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending in [ticket 6](https://todo.sr.ht/~takeiteasy/trivial-watch/6). |
 | Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads: [verification ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/10). |
+| Threaded CLISP | Native and scan behavior passes; concurrent Lisp output opens can conflict with snapshot input streams. Full verification remains pending in [ticket 10](https://todo.sr.ht/~takeiteasy/trivial-watch/10). |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
 | BSDs | Native bindings and GitHub VM tests are configured; verification is pending in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-watch/3). |
 | NetBSD before 11 | Uses scanning; the older native ABI needs separate verification in [ticket 12](https://todo.sr.ht/~takeiteasy/trivial-watch/12). |
