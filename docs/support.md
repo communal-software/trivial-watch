@@ -61,11 +61,11 @@ sbcl --non-interactive --load tests/core.lisp
 
 | Combination | Coverage gap |
 |---|---|
-| LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending in [ticket 6](https://todo.sr.ht/~takeiteasy/trivial-watch/6). |
-| Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads: [verification ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/10). |
+| LispWorks, Allegro | No licensed test installation available; untested and free to attempt loading. Verification remains pending. |
+| Ubuntu CLISP | The distro build lacks the threading support required by Bordeaux Threads. |
 | CCL, ECL on Windows | No working installation route in the selected CI setup; untested. |
-| Other BSD implementations and architectures | Untested; the verified combinations are documented in [ticket 3](https://todo.sr.ht/~takeiteasy/trivial-watch/3). |
-| NetBSD before 11 | Uses scanning; the older native ABI needs separate verification in [ticket 12](https://todo.sr.ht/~takeiteasy/trivial-watch/12). |
+| Other BSD implementations and architectures | Untested beyond the FreeBSD, NetBSD 11 and OpenBSD kqueue bindings. |
+| NetBSD before 11 | Uses scanning; the older native ABI needs separate verification in [the compatibility issue](https://github.com/communal-software/trivial-watch/issues/2). |
 | JSCL | No filesystem or threading backend for this library. |
 
 [^ccl-arm]: Distributed CCL macOS CI uses Intel runners. ARM64 CCL is verified

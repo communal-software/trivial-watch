@@ -3,7 +3,7 @@ packages:
   - curl
   - sbcl
 sources:
-  - https://git.sr.ht/~takeiteasy/trivial-watch
+  - https://github.com/communal-software/trivial-watch
 tasks:
   - quicklisp: |
       curl -fsSL --retry 5 -o quicklisp.lisp https://beta.quicklisp.org/quicklisp.lisp

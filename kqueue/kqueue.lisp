@@ -1,7 +1,7 @@
 (in-package #:trivial-watch.kqueue)
 
 (defun supported-p ()
-  ;; TODO: NetBSD before 11 needs a separate __kevent50 layout (#12).
+  ;; TODO: NetBSD before 11 needs a separate __kevent50 layout (https://github.com/communal-software/trivial-watch/issues/2).
   #+netbsd (not (null (ignore-errors (cffi:foreign-symbol-pointer "__kevent100"))))
   #+(or darwin freebsd openbsd) t
   #-(or darwin freebsd netbsd openbsd) nil)

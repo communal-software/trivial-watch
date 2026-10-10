@@ -55,7 +55,7 @@ gh workflow run ci.yml -f lisp=ecl -f os=netbsd
 Source-built CLISP is part of the ordinary matrix. The distro diagnostic retains
 the expected dependency failure; see [Support limitations](support.md#limitations).
 
-[`.build.yml`](../.build.yml) also tests SBCL/Linux on sourcehut pushes.
+[`.build.yml`](../.build.yml) also tests SBCL/Linux on pushes to the private mirror.
 Run `tests/test.sh sbcl` locally before pushing.
 
 ## Distribution releases

@@ -43,7 +43,7 @@ the timer wait.
 
 - BSD verification covers x86-64 guests. Other architectures remain unverified.
 - NetBSD before 11 uses scanning; its older versioned ABI is tracked in
-  [the compatibility ticket](https://todo.sr.ht/~takeiteasy/trivial-watch/12).
+  [the compatibility issue](https://github.com/communal-software/trivial-watch/issues/2).
 - JVM notification latency and filesystem coverage depend on the Java provider.[^jvm]
 - Content snapshots have [event precision limits](watch.md#limitations).
 
